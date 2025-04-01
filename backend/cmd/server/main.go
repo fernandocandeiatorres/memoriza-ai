@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/config"
+	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/handler"
 	"github.com/gin-gonic/gin"
 )
 

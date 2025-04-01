@@ -1,4 +1,4 @@
-module github.com/yourusername/flashcards-backend
+module github.com/fernandocandeiatorres/memoriza-ai/backend
 
 go 1.24.1
 
