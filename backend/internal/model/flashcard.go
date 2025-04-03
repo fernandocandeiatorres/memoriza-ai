@@ -1,7 +1,5 @@
 package model
 
-import "encoding/json"
-
 type Flashcard struct {
 	ID int64 `json:"id"`
 	FlashcardSetID int64 `json:"flashcard_set_id"`
@@ -20,9 +18,3 @@ type PromptRequest struct {
 	Prompt string `json:"prompt"`
 }
 
-// ParseFlashcardsResponse parses the JSON string into a FlashcardsResponse struct.
-func ParseFlashcardsResponse(jsonStr string) (FlashcardsResponse, error) {
-	var resp FlashcardsResponse
-	err := json.Unmarshal([]byte(jsonStr), &resp)
-	return resp, err
-}

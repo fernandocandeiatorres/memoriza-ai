@@ -19,7 +19,7 @@ func main() {
 
 	router.POST("/generate-flashcards", handler.GenerateFlashcardsHandler)
 
-	port := os.Getenv("POST")
+	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}

@@ -4,7 +4,6 @@ package handler
 import (
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/deepseek"
 	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/model"
@@ -39,21 +38,10 @@ func GenerateFlashcardsHandler(c *gin.Context) {
 		return
 	}
 
-	// Call the DeepSeek integration to generate flashcards.
-	// This function will call the deepseek API and return a raw string response.
-	rawResponse, err := deepseek.GenerateFlashcards(promptReq.Prompt)
+	// Call the DeepSeek integration to get a parsed response.
+	flashcardSet, err := deepseek.GenerateFlashcards(promptReq.Prompt)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Remove any <think>...</think> wrappers.
-	cleanResponse := stripThinkTag(rawResponse)
-
-	// Parse the cleaned JSON into our FlashcardsResponse model.
-	flashcardSet, err := model.ParseFlashcardsResponse(cleanResponse)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse flashcards JSON: " + err.Error()})
 		return
 	}
 
@@ -64,12 +52,4 @@ func GenerateFlashcardsHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, flashcardSet)
 }
 
-// stripThinkTag removes any <think>...</think> segments from the response string.
-func stripThinkTag(response string) string {
-	// Look for the closing </think> tag and remove everything up to it.
-	if idx := strings.Index(response, "</think>"); idx != -1 {
-		// Return the substring after the closing tag.
-		return strings.TrimSpace(response[idx+len("</think>"):])
-	}
-	return strings.TrimSpace(response)
-}
+
