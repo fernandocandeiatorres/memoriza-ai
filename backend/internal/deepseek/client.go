@@ -96,18 +96,16 @@ func GenerateFlashcards(prompt string) (model.FlashcardsResponse, error) {
 	if len(apiResponse.Choices) == 0 {
 		return model.FlashcardsResponse{}, errors.New("DeepSeek API returned empty choices")
 	}
-
 	rawContent := apiResponse.Choices[0].Message.Content
-
 	// Remove <think></think> tags using regex
 	cleanContent := utils.StripThinkTagAlternative(rawContent)
-
 	// Parse the cleaned JSON into FlashcardsResponse.
 	var flashcardsResponse model.FlashcardsResponse
-	if err := json.Unmarshal([]byte(cleanContent), &flashcardsResponse); err != nil {
+
+	flashcardsResponse, err = utils.ParseFlashcardsResponse(cleanContent)
+	if err != nil {
 		return model.FlashcardsResponse{}, err
 	}
-
 
 	return flashcardsResponse, nil
 }
