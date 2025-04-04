@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
 	"net/http"
 	"os"
 
@@ -106,6 +107,8 @@ func GenerateFlashcards(prompt string) (model.FlashcardsResponse, error) {
 	if err != nil {
 		return model.FlashcardsResponse{}, err
 	}
+
+	log.Println("flashcardsResponse: ", flashcardsResponse)
 
 	return flashcardsResponse, nil
 }

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"log"
 	"strings"
 
 	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/model"
@@ -36,20 +37,38 @@ func StripThinkTagAlternative(response string) string {
 	return cleaned
 }
 
-// ParseFlashcardsResponse parses the JSON string into a FlashcardsResponse struct.
-// If the JSON is an array, it wraps it inside a FlashcardsResponse.
+// ParseFlashcardsResponse analisa a string JSON e converte os dados para o FlashcardsResponse.
+// Se a resposta for um array, ela itera sobre ele e converte cada objeto,
+// atribuindo os valores de "front" para QuestionText e "back" para AnswerText,
+// além de definir o CardOrder sequencialmente.
 func ParseFlashcardsResponse(jsonStr string) (model.FlashcardsResponse, error) {
 	jsonStr = strings.TrimSpace(jsonStr)
-	// If the response starts with a '[' then it's a JSON array.
+	log.Println("JsonStr in parse: ", jsonStr)
+	// Se a resposta começar com '[' é um array.
 	if len(jsonStr) > 0 && jsonStr[0] == '[' {
-		var flashcards []model.Flashcard
-		if err := json.Unmarshal([]byte(jsonStr), &flashcards); err != nil {
+		var rawCards []model.FlashcardRaw
+		if err := json.Unmarshal([]byte(jsonStr), &rawCards); err != nil {
 			return model.FlashcardsResponse{}, err
 		}
-		return model.FlashcardsResponse{Flashcards: flashcards}, nil
+
+		var cards []model.Flashcard
+		for i, r := range rawCards {
+			card := model.Flashcard{
+				ID:             int64(i),       // Valor padrão, pois ainda não temos persistência
+				FlashcardSetID: 0,       // Valor padrão também
+				CardOrder:      i + 1,   // Sequência simples
+				QuestionText:   r.Front, // Mapeamento de front para question_text
+				AnswerText:     r.Back,  // Mapeamento de back para answer_text
+				CreatedAt:      "",      // Pode ser preenchido futuramente
+				UpdatedAt:      "",
+			}
+			cards = append(cards, card)
+		}
+
+		return model.FlashcardsResponse{Flashcards: cards}, nil
 	}
 
-	// Otherwise, assume it's already in the expected structure.
+	// Se não for um array, assumimos que já está na estrutura esperada.
 	var resp model.FlashcardsResponse
 	err := json.Unmarshal([]byte(jsonStr), &resp)
 	return resp, err

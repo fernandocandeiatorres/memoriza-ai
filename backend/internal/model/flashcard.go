@@ -1,5 +1,10 @@
 package model
 
+type FlashcardRaw struct {
+	Front string `json:"front"`
+	Back  string `json:"back"`
+}
+
 type Flashcard struct {
 	ID int64 `json:"id"`
 	FlashcardSetID int64 `json:"flashcard_set_id"`
