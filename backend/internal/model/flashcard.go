@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type FlashcardRaw struct {
 	Front string `json:"front"`
 	Back  string `json:"back"`
@@ -11,8 +13,8 @@ type Flashcard struct {
 	CardOrder int `json:"card_order" db:"card_order"`
 	QuestionText string `json:"question_text" db:"question_text"`
 	AnswerText string `json:"answer_text" db:"answer_text"`
-	CreatedAt string `json:"created_at" db:"created_at"`
-	UpdatedAt string `json:"updated_at" db:"updated_at"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
 
 type FlashcardsResponse struct {
@@ -20,6 +22,7 @@ type FlashcardsResponse struct {
 }
 
 type PromptRequest struct {
+	UserID int64 `json:"user_id"`
 	Prompt string `json:"prompt"`
 }
 

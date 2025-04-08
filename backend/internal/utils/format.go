@@ -2,7 +2,6 @@ package utils
 
 import (
 	"encoding/json"
-	"log"
 	"strings"
 
 	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/model"
@@ -43,34 +42,29 @@ func StripThinkTagAlternative(response string) string {
 // além de definir o CardOrder sequencialmente.
 func ParseFlashcardsResponse(jsonStr string) (model.FlashcardsResponse, error) {
 	jsonStr = strings.TrimSpace(jsonStr)
-	log.Println("JsonStr in parse: ", jsonStr)
+	
 	// Se a resposta começar com '[' é um array.
-	if len(jsonStr) > 0 && jsonStr[0] == '[' {
-		var rawCards []model.FlashcardRaw
-		if err := json.Unmarshal([]byte(jsonStr), &rawCards); err != nil {
-			return model.FlashcardsResponse{}, err
-		}
-
-		var cards []model.Flashcard
-		for i, r := range rawCards {
-			card := model.Flashcard{
-				ID:             int64(i),       // Valor padrão, pois ainda não temos persistência
-				FlashcardSetID: 0,       // Valor padrão também
-				CardOrder:      i + 1,   // Sequência simples
-				QuestionText:   r.Front, // Mapeamento de front para question_text
-				AnswerText:     r.Back,  // Mapeamento de back para answer_text
-				CreatedAt:      "",      // Pode ser preenchido futuramente
-				UpdatedAt:      "",
-			}
-			cards = append(cards, card)
-		}
-
-		return model.FlashcardsResponse{Flashcards: cards}, nil
+	// if len(jsonStr) > 0 && jsonStr[0] == '[' {
+	var rawCards []model.FlashcardRaw
+	if err := json.Unmarshal([]byte(jsonStr), &rawCards); err != nil {
+		return model.FlashcardsResponse{}, err
 	}
 
+	var cards []model.Flashcard
+	for _, r := range rawCards {
+		card := model.Flashcard{
+			QuestionText:   r.Front, // Mapeamento de front para question_text
+			AnswerText:     r.Back,  // Mapeamento de back para answer_text
+		}
+		cards = append(cards, card)
+	}
+
+	return model.FlashcardsResponse{Flashcards: cards}, nil
+	// }
+
 	// Se não for um array, assumimos que já está na estrutura esperada.
-	var resp model.FlashcardsResponse
-	err := json.Unmarshal([]byte(jsonStr), &resp)
-	return resp, err
+	// var resp model.FlashcardsResponse
+	// err := json.Unmarshal([]byte(jsonStr), &resp)
+	// return resp, err
 }
 
