@@ -6,13 +6,13 @@ type FlashcardRaw struct {
 }
 
 type Flashcard struct {
-	ID int64 `json:"id"`
-	FlashcardSetID int64 `json:"flashcard_set_id"`
-	CardOrder int `json:"card_order"`
-	QuestionText string `json:"question_text"`
-	AnswerText string `json:"answer_text"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
+	ID int64 `json:"id" db:"id"`
+	FlashcardSetID int64 `json:"flashcard_set_id" db:"flashcard_set_id"`
+	CardOrder int `json:"card_order" db:"card_order"`
+	QuestionText string `json:"question_text" db:"question_text"`
+	AnswerText string `json:"answer_text" db:"answer_text"`
+	CreatedAt string `json:"created_at" db:"created_at"`
+	UpdatedAt string `json:"updated_at" db:"updated_at"`
 }
 
 type FlashcardsResponse struct {

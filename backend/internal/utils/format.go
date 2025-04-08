@@ -73,3 +73,4 @@ func ParseFlashcardsResponse(jsonStr string) (model.FlashcardsResponse, error) {
 	err := json.Unmarshal([]byte(jsonStr), &resp)
 	return resp, err
 }
+
