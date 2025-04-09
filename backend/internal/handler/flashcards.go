@@ -10,6 +10,7 @@ import (
 	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/model"
 	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/services"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type FlashcardHandler struct {
@@ -21,25 +22,10 @@ func NewFlashcardHandler(fs services.FlashcardService, fss services.FlashcardSet
 	return &FlashcardHandler{flashcardService: fs, flashcardSetService: fss}
 }
 
+
+
 // GenerateFlashcardsHandler handles POST requests to generate flashcards using the DeepSeek API.
-// It expects a JSON payload with a "prompt" field.
-//
-// Example of a DeepSeek API response:
-// <think>This is some meta-information</think>
-// {
-//   "flashcards": [
-//     {
-//       "front": "What is the main function of the heart?",
-//       "back": "To pump blood throughout the body."
-//     },
-//     {
-//       "front": "What is an arrhythmia?",
-//       "back": "An irregular heartbeat."
-//     }
-//   ]
-// }
-//
-// This handler strips out the <think>...</think> portion before parsing the JSON.
+// It expects a JSON payload with a "prompt" field and user_id.
 func (h *FlashcardHandler) GenerateFlashcards(c *gin.Context) {
 	var promptReq model.PromptRequest
 
@@ -84,4 +70,56 @@ func (h *FlashcardHandler) GenerateFlashcards(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"flashcard_set_id": setID ,"flashcards": stored})
 }
 
+func (h *FlashcardHandler) GetFlashcardsBySetID(c *gin.Context) {
+	
+	setIDStr := c.Param("set_id")
+	setID, err := uuid.Parse(setIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid flashcard set ID"})
+		return
+	}
 
+	flashcards, err := h.flashcardService.GetAllBySetID(context.Background(), setID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch flashcards"})
+		log.Println("Erro ao obter os flashcards:", err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"flashcards": flashcards} )
+}
+
+func (h *FlashcardHandler) GetFlashcardsByTopic(c *gin.Context) {
+	userIDStr := c.Param("user_id")
+	topic := c.Query("topic")
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	flashcards, err := h.flashcardService.GetFlashcardsByTopic(context.Background(), userID, topic)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch flashcards"})
+		log.Println("Erro ao obter os flashcards:", err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"flashcards": flashcards} )
+}
+
+func (h *FlashcardHandler) GetAllUserFlashcards(c *gin.Context) {
+	userIDStr := c.Param("user_id")
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+	
+	flashcardSets, err := h.flashcardService.GetAllUserFlashcards(context.Background(), userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch flashcards"})
+		log.Println("Erro ao obter os flashcards:", err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"user_flashcard_sets": flashcardSets} )
+}

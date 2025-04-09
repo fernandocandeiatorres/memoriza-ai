@@ -14,7 +14,10 @@ type FlashcardSetService interface {
 	Create(ctx context.Context, set model.FlashcardSet) (uuid.UUID, error)
 	// GetByID busca um flashcard set pelo ID.
 	GetByID(ctx context.Context, setID uuid.UUID) (model.FlashcardSet, error)
+	// GetAllByUserID busca todos os flashcard sets de um usuário.
+	GetAllByUserID(ctx context.Context, userID uuid.UUID) ([]model.FlashcardSet, error)
 }
+
 
 type flashcardSetService struct {
 	repo repository.FlashcardSetRepository
@@ -34,4 +37,8 @@ func (s *flashcardSetService) Create(ctx context.Context, set model.FlashcardSet
 // GetByID chama o repositório para recuperar um flashcard set.
 func (s *flashcardSetService) GetByID(ctx context.Context, setID uuid.UUID) (model.FlashcardSet, error) {
 	return s.repo.GetByID(ctx, setID)
+}
+
+func (s *flashcardSetService) GetAllByUserID(ctx context.Context, userID uuid.UUID) ([]model.FlashcardSet, error) {
+	return s.repo.GetAllByUserID(ctx, userID)
 }

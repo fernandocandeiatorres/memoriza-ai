@@ -11,6 +11,7 @@ import (
 type FlashcardSetRepository interface {
     Create(ctx context.Context, fc *model.FlashcardSet) (uuid.UUID, error)
     GetByID(ctx context.Context, setID uuid.UUID) (model.FlashcardSet, error)
+	GetAllByUserID(ctx context.Context, userID uuid.UUID) ([]model.FlashcardSet, error)
 }
 
 type flashcardSetRepo struct {
@@ -38,3 +39,24 @@ func (r *flashcardSetRepo) GetByID(ctx context.Context, setID uuid.UUID) (model.
 		Scan(&set.ID, &set.UserID, &set.Topic, &set.CreatedAt, &set.UpdatedAt)
 	return set, err
 }
+
+func (r *flashcardSetRepo) GetAllByUserID(ctx context.Context, userID uuid.UUID) ([]model.FlashcardSet, error) {
+	query := `SELECT id, user_id, topic, created_at, updated_at FROM flashcard_sets WHERE user_id = $1 ORDER BY created_at DESC`
+	rows, err := r.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var sets []model.FlashcardSet
+	for rows.Next() {
+		var set model.FlashcardSet
+		if err := rows.Scan(&set.ID, &set.UserID, &set.Topic, &set.CreatedAt, &set.UpdatedAt); err != nil {
+			return nil, err
+		}
+		sets = append(sets, set)
+	}
+
+	return sets, nil
+}
+

@@ -2,13 +2,12 @@ package main
 
 import (
 	"log"
-	"os"
 
+	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/api"
 	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/database"
 	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/handler"
 	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/repository"
 	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/services"
-	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
@@ -25,23 +24,16 @@ func main() {
 	flashcardSetRepo := repository.NewFlashcardSetRepository(database.DB)
 
 	// 3. Cria os serviços, injetando os repositórios correspondentes.
-	flashcardService := services.NewFlashcardService(flashcardRepo)
+	flashcardService := services.NewFlashcardService(flashcardRepo, flashcardSetRepo)
 	flashcardSetService := services.NewFlashcardSetService(flashcardSetRepo)
 
 	// 4. Cria os handlers, injetando os serviços que eles utilizarão.
-	//    No handler de flashcards, estamos passando também o serviço do flashcard set,
-	//    pois o fluxo de criação pode envolver a criação de um set.
 	flashcardHandler := handler.NewFlashcardHandler(flashcardService, flashcardSetService)
+	flashcardSetHandler := handler.NewFlashcardSetHandler(flashcardService, flashcardSetService)
 
-	// 5. Inicializa o router do Gin e mapeia as rotas.
-	router := gin.Default()
-	router.POST("/flashcards/generate", flashcardHandler.GenerateFlashcards)
+	// 5. Setup Router
+	router := api.SetupRouter(flashcardHandler, flashcardSetHandler)
 
-	// 6. Define a porta a partir de variável de ambiente (ou 8080 por padrão).
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-	log.Printf("Servidor rodando na porta %s", port)
-	router.Run(":" + port)
+	// 6. Inicia o servidor
+	api.RunServer(router)
 }
