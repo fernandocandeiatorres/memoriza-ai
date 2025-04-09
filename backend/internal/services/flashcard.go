@@ -5,10 +5,11 @@ import (
 
 	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/model"
 	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/repository"
+	"github.com/google/uuid"
 )
 
 type FlashcardService interface {
-    GenerateAndStoreFlashcards(ctx context.Context, frontsBacks []model.Flashcard, setID int64) ([]model.Flashcard, error)
+    GenerateAndStoreFlashcards(ctx context.Context, frontsBacks []model.Flashcard, setID uuid.UUID) ([]model.Flashcard, error)
 }
 
 type flashcardService struct {
@@ -21,7 +22,7 @@ func NewFlashcardService(repo repository.FlashcardRepository) FlashcardService {
 
 // Este método recebe uma lista de flashcards (apenas com os dados de front/back) e atribui 
 // ordem, setID e persiste cada um.
-func (s *flashcardService) GenerateAndStoreFlashcards(ctx context.Context, cards []model.Flashcard, setID int64) ([]model.Flashcard, error) {
+func (s *flashcardService) GenerateAndStoreFlashcards(ctx context.Context, cards []model.Flashcard, setID uuid.UUID) ([]model.Flashcard, error) {
     var result []model.Flashcard
     for i, card := range cards {
         card.FlashcardSetID = setID
