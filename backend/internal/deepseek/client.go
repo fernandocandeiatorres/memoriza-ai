@@ -44,7 +44,7 @@ func GenerateFlashcards(prompt string) (model.FlashcardsResponse, error) {
 		prompt + " . Each flashcard should have a 'front' (a question or term) and a 'back' (a detailed, accurate answer or definition), " + 
 		"written at a knowledge level appropriate for medical school standards. The content should be concise yet comprehensive, focusing on key concepts," + 
 		" clinical relevance, and testable material. Ensure variety in the types of questions (e.g., definitions, mechanisms, clinical scenarios, diagnostics)" + 
-		" to aid efficient learning. Format the output as a JSON array, with each object containing 'front' and 'back' fields."
+		" to aid efficient learning. Format the output as a JSON array, with each object containing 'front' and 'back' fields. Gere tudo isso em português brasileiro"
 
 
 	// Prepare the request payload.
