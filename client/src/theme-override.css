@@ -1,0 +1,14 @@
+:root {
+  --primary: 172 28% 51% !important; /* #62a39d */
+  --primary-foreground: 0 0% 100% !important;
+  --accent: 172 23% 92% !important; 
+  --accent-foreground: 172 50% 20% !important; 
+  --success: 142 72% 29% !important;
+}
+
+.dark {
+  --primary: 172 28% 51% !important; /* #62a39d */
+  --primary-foreground: 0 0% 100% !important;
+  --accent: 172 35% 20% !important;
+  --accent-foreground: 172 20% 90% !important;
+}
