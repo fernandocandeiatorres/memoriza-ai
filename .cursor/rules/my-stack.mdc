@@ -1,0 +1,15 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Technical Stack
+
+- __ For the backend
+- __ for the frontend
+- __ databases, never JSON file storage
+- Separate databases for dev, test and prod
+- Elasticsearch for search, using elastic.co hosting
+- Elastic.co will have dev and prod indexes
+- __ tests
+

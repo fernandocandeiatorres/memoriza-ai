@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -32,20 +33,35 @@ type DeepSeekAPIResponse struct {
 	} `json:"choices"`
 }
 
-
 // GenerateFlashcards calls the DeepSeek API and returns the raw response as a string.
-func GenerateFlashcards(prompt string) (model.FlashcardsResponse, error) {
+func GenerateFlashcards(prompt string, level string) (model.FlashcardsResponse, error) {
 	apiKey := os.Getenv("DEEPISEEK_API_KEY")
 	if apiKey == "" {
 		return model.FlashcardsResponse{}, errors.New("DEEPISEEK_API_KEY not set in environment")
 	}
 
-	systemPrompt := "Generate 10 flashcards designed for medical school students to practice for exams, based on the topic of " + 
-		prompt + " . Each flashcard should have a 'front' (a question or term) and a 'back' (a detailed, accurate answer or definition), " + 
-		"written at a knowledge level appropriate for medical school standards. The content should be concise yet comprehensive, focusing on key concepts," + 
-		" clinical relevance, and testable material. Ensure variety in the types of questions (e.g., definitions, mechanisms, clinical scenarios, diagnostics)" + 
-		" to aid efficient learning. Format the output as a JSON array, with each object containing 'front' and 'back' fields. Gere tudo isso em português brasileiro"
+	// Map difficulty levels to Portuguese descriptions
+	difficultyMap := map[string]string{
+		"easy":   "nível básico",
+		"medium": "nível intermediário",
+		"hard":   "nível avançado",
+	}
 
+	difficulty := difficultyMap[level]
+	if difficulty == "" {
+		difficulty = "nível intermediário" // default to medium
+	}
+
+	systemPrompt := fmt.Sprintf(
+		"Generate 10 flashcards designed for medical school students to practice for exams, based on the topic of %s. "+
+			"The flashcards should be at %s, appropriate for medical school standards. "+
+			"Each flashcard should have a 'front' (a question or term) and a 'back' (a detailed, accurate answer or definition). "+
+			"The content should be concise yet comprehensive, focusing on key concepts, clinical relevance, and testable material. "+
+			"Ensure variety in the types of questions (e.g., definitions, mechanisms, clinical scenarios, diagnostics) to aid efficient learning. "+
+			"Format the output as a JSON array, with each object containing 'front' and 'back' fields. Gere tudo isso em português brasileiro",
+		prompt,
+		difficulty,
+	)
 
 	// Prepare the request payload.
 	reqPayload := DeepSeekAPIRequest{
@@ -69,7 +85,7 @@ func GenerateFlashcards(prompt string) (model.FlashcardsResponse, error) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer " + apiKey)
+	req.Header.Set("Authorization", "Bearer "+apiKey)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

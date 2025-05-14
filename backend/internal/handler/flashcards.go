@@ -22,7 +22,12 @@ func NewFlashcardHandler(fs services.FlashcardService, fss services.FlashcardSet
 	return &FlashcardHandler{flashcardService: fs, flashcardSetService: fss}
 }
 
-
+// FlashcardResponse represents the format expected by the frontend
+type FlashcardResponse struct {
+	ID    string `json:"id"`
+	Front string `json:"front"`
+	Back  string `json:"back"`
+}
 
 // GenerateFlashcardsHandler handles POST requests to generate flashcards using the DeepSeek API.
 // It expects a JSON payload with a "prompt" field and user_id.
@@ -50,7 +55,7 @@ func (h *FlashcardHandler) GenerateFlashcards(c *gin.Context) {
 	}
 
 	// 2. Gerar os flashcards
-	flashcardSet, err := deepseek.GenerateFlashcards(promptReq.Prompt)
+	flashcardSet, err := deepseek.GenerateFlashcards(promptReq.Prompt, promptReq.Level)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -67,7 +72,7 @@ func (h *FlashcardHandler) GenerateFlashcards(c *gin.Context) {
 	log.Printf("Criado set ID: %d com %d flashcards", setID, len(stored))
 
 	// Respond with the generated flashcards.
-	c.JSON(http.StatusOK, gin.H{"flashcard_set_id": setID ,"flashcards": stored})
+	c.JSON(http.StatusOK, gin.H{"flashcard_set_id": setID, "flashcards": stored})
 }
 
 func (h *FlashcardHandler) GetFlashcardsBySetID(c *gin.Context) {
