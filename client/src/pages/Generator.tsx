@@ -122,8 +122,6 @@ export default function Generator() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f8fafa]">
-      <Navbar />
-
       <main className="flex-grow px-4 py-8 md:py-12">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8 md:mb-12 text-center">

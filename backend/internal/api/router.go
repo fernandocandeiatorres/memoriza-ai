@@ -1,12 +1,13 @@
 package api
 
 import (
-        "log"
-        "os"
+	"log"
+	"os"
 
-        "github.com/fernandocandeiatorres/memoriza-ai/backend/internal/handler"
-        "github.com/gin-contrib/cors"
-        "github.com/gin-gonic/gin"
+	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/handler"
+	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/middleware"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
 // SetupRouter initializes the Gin router and maps the API routes.
@@ -23,7 +24,7 @@ func SetupRouter(flashcardHandler *handler.FlashcardHandler, flashcardSetHandler
         }))
 
         // Group endpoints under /api/v1
-        apiV1 := router.Group("/api/v1")
+        apiV1 := router.Group("/api/v1", middleware.SupabaseAuth())
         {
                 apiV1.GET("flashcardsets/:set_id/flashcards", flashcardHandler.GetFlashcardsBySetID)
                 apiV1.GET("flashcardsets/:set_id", flashcardSetHandler.GetFlashcardSetByID)
@@ -38,6 +39,8 @@ func SetupRouter(flashcardHandler *handler.FlashcardHandler, flashcardSetHandler
                         c.Status(200)
                 })
         }
+
+    
 
         return router
 }
