@@ -1,18 +1,23 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "wouter";
-import { Brain } from "lucide-react";
+import { Link } from "wouter";
+import { Brain, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Navbar() {
   const [session, setSession] = useState<Session | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const [, navigate] = useLocation();
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -54,7 +59,6 @@ export default function Navbar() {
         title: "Logout realizado",
         description: "Você foi desconectado com sucesso.",
       });
-      navigate("/");
       setIsMobileMenuOpen(false);
     } catch (error) {
       toast({
@@ -69,11 +73,12 @@ export default function Navbar() {
   const handleGeneratorClick = (e: React.MouseEvent) => {
     if (!session) {
       e.preventDefault();
-      navigate("/login?redirectTo=/generator");
-      setIsMobileMenuOpen(false);
-    } else {
-      setIsMobileMenuOpen(false);
+      const currentPath = window.location.pathname;
+      window.location.href = `/login?redirectTo=${encodeURIComponent(
+        currentPath
+      )}`;
     }
+    setIsMobileMenuOpen(false);
   };
 
   const handleMobileLinkClick = () => {
@@ -83,10 +88,10 @@ export default function Navbar() {
   return (
     <nav className="bg-white shadow px-4 sm:px-6 lg:px-8 py-3">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
-        <div className="flex items-center">
+        <div className="flex items-center ">
           <Link href="/">
-            <a className="flex items-center text-primary font-bold text-2xl">
-              <Brain className="mr-2 h-6 w-6" />
+            <a className="flex items-center text-primary font-bold text-2xl transition-all duration-300 hover:scale-105 hover:bg-primary/10 rounded-lg px-3 py-2 group">
+              <Brain className="mr-2 h-6 w-6 transition-transform duration-300 group-hover:rotate-12" />
               memoriza<span className="text-accent">.ai</span>
             </a>
           </Link>
@@ -116,19 +121,29 @@ export default function Navbar() {
               </a>
             </Link>
             {session ? (
-              <>
-                <Link href="/dashboard">
-                  <Button className="text-white hover:bg-primary/90 px-3 py-2 text-sm font-medium">
-                    Dashboard
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="relative h-8 w-8 rounded-full"
+                  >
+                    <User className="h-5 w-5" />
                   </Button>
-                </Link>
-                <Button
-                  className="bg-primary hover:bg-primary/90 text-white"
-                  onClick={handleLogout}
-                >
-                  Sign Out
-                </Button>
-              </>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard">
+                      <a className="cursor-pointer">Dashboard</a>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer text-red-600"
+                    onClick={handleLogout}
+                  >
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <>
                 <Link href="/login">

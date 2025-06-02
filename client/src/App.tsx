@@ -7,6 +7,8 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Generator from "@/pages/Generator";
 import Login from "@/pages/Login";
+import Dashboard from "@/pages/Dashboard";
+import FlashcardSetDetails from "@/pages/FlashcardSetDetails";
 import { useEffect, useState, ComponentType } from "react";
 import { supabase } from "@/lib/supabase";
 import { Session } from "@supabase/supabase-js";
@@ -85,6 +87,12 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/generator">
           <ProtectedRoute component={Generator} />
+        </Route>
+        <Route path="/dashboard">
+          <ProtectedRoute component={Dashboard} />
+        </Route>
+        <Route path="/dashboard/flashcard-set/:id">
+          <ProtectedRoute component={FlashcardSetDetails} />
         </Route>
         {/* Fallback to 404 */}
         <Route component={NotFound} />
