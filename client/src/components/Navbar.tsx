@@ -1,74 +1,19 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { Brain, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
-import { Session } from "@supabase/supabase-js";
-import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Navbar() {
-  const [session, setSession] = useState<Session | null>(null);
+  const { session, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const {
-          data: { session },
-          error,
-        } = await supabase.auth.getSession();
-        if (error) throw error;
-        setSession(session);
-      } catch (error) {
-        toast({
-          title: "Erro de autenticação",
-          description:
-            "Não foi possível verificar sua sessão. Por favor, tente novamente.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeAuth();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [toast]);
-
-  const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      toast({
-        title: "Logout realizado",
-        description: "Você foi desconectado com sucesso.",
-      });
-      setIsMobileMenuOpen(false);
-    } catch (error) {
-      toast({
-        title: "Erro ao fazer logout",
-        description:
-          "Não foi possível desconectar. Por favor, tente novamente.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleGeneratorClick = (e: React.MouseEvent) => {
     if (!session) {
@@ -82,6 +27,11 @@ export default function Navbar() {
   };
 
   const handleMobileLinkClick = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  const handleLogout = async () => {
+    await signOut();
     setIsMobileMenuOpen(false);
   };
 
@@ -211,36 +161,32 @@ export default function Navbar() {
             </a>
           </Link>
           {session ? (
-            <div className="flex flex-col gap-2 items-end justify-between px-2 pt-2 pb-3 space-y-1 sm:px-3 w-full">
-              <Link
-                href="/dashboard"
-                onClick={handleMobileLinkClick}
-                className="w-full"
-              >
-                <Button className="w-full block text-neutral-dark hover:text-primary px-3 text-base font-medium">
+            <>
+              <Link href="/dashboard" onClick={handleMobileLinkClick}>
+                <a className="block text-neutral-dark hover:text-primary px-3 py-2 text-base font-medium">
                   Dashboard
-                </Button>
+                </a>
               </Link>
-              <Button
-                className="w-1/6 bg-red-600 hover:bg-red-700 text-white mt-3"
+              <button
                 onClick={handleLogout}
+                className="block w-full text-left text-red-600 hover:text-red-700 px-3 py-2 text-base font-medium"
               >
-                Sign Out
-              </Button>
-            </div>
+                Sair
+              </button>
+            </>
           ) : (
-            <div className="flex flex-col gap-2  px-2 pt-2 pb-3 space-y-1 sm:px-3 w-full">
+            <>
               <Link href="/login" onClick={handleMobileLinkClick}>
-                <Button className="block text-neutral-dark hover:text-primary px-3 py-2 text-base font-medium">
+                <a className="block text-primary hover:text-primary/80 px-3 py-2 text-base font-medium">
                   Sign In
-                </Button>
+                </a>
               </Link>
               <Link href="/register" onClick={handleMobileLinkClick}>
-                <Button className=" bg-primary hover:bg-primary/90 text-white mt-3">
+                <a className="block text-primary hover:text-primary/80 px-3 py-2 text-base font-medium">
                   Sign Up
-                </Button>
+                </a>
               </Link>
-            </div>
+            </>
           )}
         </div>
       </div>

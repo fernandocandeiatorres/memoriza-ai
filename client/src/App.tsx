@@ -8,12 +8,10 @@ import Home from "@/pages/Home";
 import Generator from "@/pages/Generator";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
-import { useEffect, useState, ComponentType } from "react";
-import { supabase } from "@/lib/supabase";
-import { Session } from "@supabase/supabase-js";
-import { useToast } from "@/components/ui/use-toast";
-import Navbar from "./components/Navbar";
 import Register from "./pages/Register";
+import Navbar from "./components/Navbar";
+import { ComponentType } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 function ProtectedRoute({
   component: Component,
@@ -21,42 +19,8 @@ function ProtectedRoute({
 }: {
   component: ComponentType<any>;
 }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const { session, loading } = useAuth();
   const [location] = useLocation();
-
-  useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const {
-          data: { session },
-          error,
-        } = await supabase.auth.getSession();
-        if (error) throw error;
-        setSession(session);
-      } catch (error) {
-        toast({
-          title: "Erro de autenticação",
-          description:
-            "Não foi possível verificar sua sessão. Por favor, tente novamente.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeAuth();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [toast]);
 
   if (loading) {
     return (
@@ -75,8 +39,6 @@ function ProtectedRoute({
 }
 
 function Router() {
-  const [location] = useLocation();
-
   return (
     <>
       <Navbar />
@@ -90,7 +52,6 @@ function Router() {
         <Route path="/dashboard">
           <ProtectedRoute component={Dashboard} />
         </Route>
-        {/* Fallback to 404 */}
         <Route component={NotFound} />
       </Switch>
     </>
