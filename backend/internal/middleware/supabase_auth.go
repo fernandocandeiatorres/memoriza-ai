@@ -31,7 +31,7 @@ func SupabaseAuth() gin.HandlerFunc {
 		return []byte(secret), nil
 	  })
 	  if err != nil || !token.Valid {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	  }
   
@@ -42,18 +42,22 @@ func SupabaseAuth() gin.HandlerFunc {
 		return
 	  }
   
-	  // Optional: Check the “aud” claim matches your Supabase project’s API URL
+	  // Optional: Check the "aud" claim matches your Supabase project's API URL
 	  // Optional: Check exp, iat are valid (jwt.Parse does this by default)
   
-	  // Grab the user UUID from “sub”
+	  // Grab the user UUID from "sub"
 	  userID, ok := claims["sub"].(string)
 	  if !ok {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid sub claim"})
 		return
 	  }
   
+	  // Grab the user email from "email" claim
+	  userEmail, _ := claims["email"].(string) // Optional, might not always be present
+  
 	  // Set in context for handlers to use
 	  c.Set("userID", userID)
+	  c.Set("userEmail", userEmail)
 	  c.Next()
 	}
   }

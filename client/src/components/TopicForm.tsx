@@ -2,14 +2,14 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Zap } from "lucide-react";
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage, 
-  FormDescription 
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,14 +20,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { type GenerateFlashcardsRequest, generateFlashcardsSchema } from "@shared/schema";
+import {
+  type GenerateFlashcardsRequest,
+  generateFlashcardsSchema,
+} from "@shared/schema";
 
 interface TopicFormProps {
   onSubmit: (data: GenerateFlashcardsRequest) => void;
   isLoading?: boolean;
 }
 
-export default function TopicForm({ onSubmit, isLoading = false }: TopicFormProps) {
+export default function TopicForm({
+  onSubmit,
+  isLoading = false,
+}: TopicFormProps) {
   const form = useForm<GenerateFlashcardsRequest>({
     resolver: zodResolver(generateFlashcardsSchema),
     defaultValues: {
@@ -43,10 +49,7 @@ export default function TopicForm({ onSubmit, isLoading = false }: TopicFormProp
   return (
     <div id="topic-form">
       <Form {...form}>
-        <form 
-          onSubmit={form.handleSubmit(handleSubmit)} 
-          className="bg-white"
-        >
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="bg-white">
           <FormField
             control={form.control}
             name="topic"
@@ -63,13 +66,14 @@ export default function TopicForm({ onSubmit, isLoading = false }: TopicFormProp
                   />
                 </FormControl>
                 <FormDescription className="mt-2 text-xs text-gray-500">
-                  Seja específico para melhores resultados. Exemplos: "Arritmias Cardíacas", "Fisiologia Renal"
+                  Seja específico para melhores resultados. Exemplos: "Arritmias
+                  Cardíacas", "Fisiologia Renal"
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-          
+
           <FormField
             control={form.control}
             name="difficulty"
@@ -109,13 +113,14 @@ export default function TopicForm({ onSubmit, isLoading = false }: TopicFormProp
                   </SelectContent>
                 </Select>
                 <FormDescription className="mt-2 text-xs text-gray-500">
-                  Escolha o nível de dificuldade dos flashcards que serão gerados.
+                  Escolha o nível de dificuldade dos flashcards que serão
+                  gerados.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-          
+
           <div className="flex items-center justify-between mt-8">
             <Button
               type="submit"

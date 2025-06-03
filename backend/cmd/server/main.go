@@ -22,14 +22,16 @@ func main() {
 	// 2. Cria os repositórios, passando a instância do banco de dados.
 	flashcardRepo := repository.NewFlashcardRepository(database.DB)
 	flashcardSetRepo := repository.NewFlashcardSetRepository(database.DB)
+	userRepo := repository.NewUserRepository(database.DB)
 
 	// 3. Cria os serviços, injetando os repositórios correspondentes.
 	flashcardService := services.NewFlashcardService(flashcardRepo, flashcardSetRepo)
 	flashcardSetService := services.NewFlashcardSetService(flashcardSetRepo)
+	userService := services.NewUserService(userRepo)
 
 	// 4. Cria os handlers, injetando os serviços que eles utilizarão.
-	flashcardHandler := handler.NewFlashcardHandler(flashcardService, flashcardSetService)
-	flashcardSetHandler := handler.NewFlashcardSetHandler(flashcardService, flashcardSetService)
+	flashcardHandler := handler.NewFlashcardHandler(flashcardService, flashcardSetService, userService)
+	flashcardSetHandler := handler.NewFlashcardSetHandler(flashcardService, flashcardSetService, userService)
 
 	// 5. Setup Router
 	router := api.SetupRouter(flashcardHandler, flashcardSetHandler)

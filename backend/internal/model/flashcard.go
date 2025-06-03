@@ -26,7 +26,6 @@ type FlashcardsResponse struct {
 }
 
 type PromptRequest struct {
-	UserID uuid.UUID `json:"user_id"`
 	Prompt string `json:"prompt"`
 	Level string `json:"level"`
 }

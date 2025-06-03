@@ -18,19 +18,32 @@ console.log(`Backend Go URL: ${GO_API_BASE_URL}`);
  *
  * @param endpoint - O endpoint da API
  * @param options - Opções do fetch (método, corpo, headers)
+ * @param authToken - Token de autenticação opcional
  * @returns Os dados da resposta em JSON
  * @throws Erro se a requisição falhar
  */
 async function goApiRequest<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  authToken?: string
 ): Promise<T> {
   const url = `${GO_API_BASE_URL}${endpoint}`;
 
   // Configuração padrão para requisições JSON
+  const defaultHeaders: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  // Adiciona o token de autorização se fornecido
+  if (authToken) {
+    defaultHeaders["Authorization"] = `Bearer ${authToken}`;
+  }
+
+  console.log("authToken", authToken);
+
   const defaultOptions: RequestInit = {
     headers: {
-      "Content-Type": "application/json",
+      ...defaultHeaders,
       ...options.headers,
     },
   };
@@ -62,18 +75,17 @@ async function goApiRequest<T>(
  * Serviço para geração de flashcards usando o backend Go
  *
  * @param request - Requisição contendo o tópico para gerar flashcards
- * @param userId - ID do usuário
+ * @param authToken - Token de autenticação do usuário
  * @returns Uma promessa que resolve para os flashcards gerados
  */
 export async function generateFlashcards(
   request: GenerateFlashcardsRequest,
-  userId: string
+  authToken: string
 ): Promise<GenerateFlashcardsResponse> {
-  // Converte o formato do frontend para o formato esperado pelo Go
-  const goRequest: GoGenerateFlashcardsRequest = adaptFrontendToGoRequest(
-    request,
-    userId
-  );
+  // Convert frontend format to Go backend expected format
+  const goRequest: GoGenerateFlashcardsRequest =
+    adaptFrontendToGoRequest(request);
+
   console.log("goRequest", goRequest);
   try {
     // Faz a requisição para o endpoint de geração de flashcards
@@ -82,7 +94,8 @@ export async function generateFlashcards(
       {
         method: "POST",
         body: JSON.stringify(goRequest),
-      }
+      },
+      authToken
     );
 
     return data;
@@ -96,30 +109,85 @@ export async function generateFlashcards(
  * Obtém os detalhes de um conjunto de flashcards específico
  *
  * @param setId - ID do conjunto de flashcards
+ * @param authToken - Token de autenticação do usuário
  * @returns Os dados do conjunto de flashcards com seus cartões
  */
-export async function getFlashcardSet(setId: string) {
-  return goApiRequest(`/flashcardsets/${setId}`);
+export async function getFlashcardSet(setId: string, authToken: string) {
+  const response = await goApiRequest(`/flashcardsets/${setId}`, {}, authToken);
+
+  // The API returns { "flashcard_set": {...} }, so we need to extract the object
+  if (response && typeof response === "object" && "flashcard_set" in response) {
+    return response.flashcard_set;
+  }
+
+  return response;
 }
 
 /**
  * Obtém todos os flashcards de um conjunto específico
  *
  * @param setId - ID do conjunto de flashcards
+ * @param authToken - Token de autenticação do usuário
  * @returns Lista de flashcards do conjunto
  */
-export async function getFlashcardsBySetId(setId: string) {
-  return goApiRequest(`/flashcardsets/${setId}/flashcards`);
+export async function getFlashcardsBySetId(setId: string, authToken: string) {
+  const response = await goApiRequest(
+    `/flashcardsets/${setId}/flashcards`,
+    {},
+    authToken
+  );
+
+  // The API returns { "flashcards": [...] }, so we need to extract the array
+  if (response && typeof response === "object" && "flashcards" in response) {
+    const flashcards = response.flashcards || [];
+
+    // Verify that flashcards is an array before mapping
+    if (Array.isArray(flashcards)) {
+      // Convert backend format (question_text, answer_text) to frontend format (question, answer)
+      return flashcards.map((flashcard: any) => ({
+        id: flashcard.id,
+        question: flashcard.question_text,
+        answer: flashcard.answer_text,
+        topic: "", // Not used in details page
+        // Keep original fields for reference if needed
+        question_text: flashcard.question_text,
+        answer_text: flashcard.answer_text,
+        card_order: flashcard.card_order,
+        flashcard_set_id: flashcard.flashcard_set_id,
+        created_at: flashcard.created_at,
+        updated_at: flashcard.updated_at,
+      }));
+    }
+  }
+
+  return [];
 }
 
 /**
  * Obtém todos os conjuntos de flashcards de um usuário
  *
  * @param userId - ID do usuário
+ * @param authToken - Token de autenticação do usuário
  * @returns Lista de conjuntos de flashcards do usuário
  */
-export async function getUserFlashcardSets(userId: string) {
-  return goApiRequest(`/users/${userId}/flashcardsets`);
+export async function getUserFlashcardSets(userId: string, authToken: string) {
+  const response = await goApiRequest(
+    `/users/${userId}/flashcardsets`,
+    {},
+    authToken
+  );
+
+  // The API returns { "flashcard_sets": [...] }, so we need to extract the array
+  if (
+    response &&
+    typeof response === "object" &&
+    "flashcard_sets" in response
+  ) {
+    return response.flashcard_sets || [];
+  }
+
+  // Fallback: if response is already an array or null/undefined
+  return response || [];
 }
 
 /**
@@ -127,10 +195,24 @@ export async function getUserFlashcardSets(userId: string) {
  *
  * @param userId - ID do usuário
  * @param topic - Tópico dos flashcards
+ * @param authToken - Token de autenticação do usuário
  * @returns Lista de flashcards correspondentes ao tópico
  */
-export async function getUserFlashcardsByTopic(userId: string, topic: string) {
-  return goApiRequest(
-    `/users/${userId}/flashcards-topic?topic=${encodeURIComponent(topic)}`
+export async function getUserFlashcardsByTopic(
+  userId: string,
+  topic: string,
+  authToken: string
+) {
+  const response = await goApiRequest(
+    `/users/${userId}/flashcards-topic?topic=${encodeURIComponent(topic)}`,
+    {},
+    authToken
   );
+
+  // The API returns { "flashcards": [...] }, so we need to extract the array
+  if (response && typeof response === "object" && "flashcards" in response) {
+    return response.flashcards || [];
+  }
+
+  return response || [];
 }

@@ -11,10 +11,9 @@ CREATE TABLE users (
 CREATE TABLE flashcard_sets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
-    prompt TEXT NOT NULL,
     topic TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- Optionally, you could add a topic column or status if needed.
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_user
       FOREIGN KEY(user_id)
         REFERENCES users(id)
@@ -26,8 +25,8 @@ CREATE TABLE flashcards (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     flashcard_set_id UUID NOT NULL,
     card_order INTEGER NOT NULL,  -- To keep the original order of flashcards.
-    front TEXT NOT NULL,
-    back TEXT NOT NULL,
+    question_text TEXT NOT NULL,
+    answer_text TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT fk_flashcard_set

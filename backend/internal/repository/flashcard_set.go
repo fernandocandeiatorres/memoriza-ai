@@ -25,19 +25,27 @@ func NewFlashcardSetRepository(db *sql.DB) FlashcardSetRepository {
 func (r *flashcardSetRepo) Create(ctx context.Context, fcSet *model.FlashcardSet) (uuid.UUID, error) {
     query := `INSERT INTO flashcard_sets (user_id, topic, created_at, updated_at)
               VALUES ($1, $2, NOW(), NOW()) RETURNING id`
-	var newID uuid.UUID
+    
+    var newID uuid.UUID
     err := r.db.QueryRowContext(ctx, query, fcSet.UserID, fcSet.Topic).
-        Scan(&fcSet.ID)
-	newID = fcSet.ID
-	return newID, err
+        Scan(&newID)
+    
+    if err != nil {
+        return uuid.Nil, err
+    }
+    
+    fcSet.ID = newID
+	return newID, nil
 }
 
 func (r *flashcardSetRepo) GetByID(ctx context.Context, setID uuid.UUID) (model.FlashcardSet, error) {
     query := `SELECT id, user_id, topic, created_at, updated_at FROM flashcard_sets WHERE id = $1`
     var set model.FlashcardSet
+    
 	err := r.db.QueryRowContext(ctx, query, setID).
 		Scan(&set.ID, &set.UserID, &set.Topic, &set.CreatedAt, &set.UpdatedAt)
-	return set, err
+    
+    return set, err
 }
 
 func (r *flashcardSetRepo) GetAllByUserID(ctx context.Context, userID uuid.UUID) ([]model.FlashcardSet, error) {
@@ -51,9 +59,11 @@ func (r *flashcardSetRepo) GetAllByUserID(ctx context.Context, userID uuid.UUID)
 	var sets []model.FlashcardSet
 	for rows.Next() {
 		var set model.FlashcardSet
+		
 		if err := rows.Scan(&set.ID, &set.UserID, &set.Topic, &set.CreatedAt, &set.UpdatedAt); err != nil {
 			return nil, err
 		}
+		
 		sets = append(sets, set)
 	}
 

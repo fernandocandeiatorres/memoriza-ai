@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import Navbar from "@/components/Navbar";
+import { supabase } from "@/lib/supabase";
+import { User, Session } from "@supabase/supabase-js";
 import Footer from "@/components/Footer";
 import TopicForm from "@/components/TopicForm";
 import FlashcardsContainer from "@/components/FlashcardsContainer";
@@ -18,6 +20,7 @@ import { mockGenerateFlashcards } from "@/lib/mockFlashcards";
 const USE_GO_BACKEND = true;
 
 export default function Generator() {
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
@@ -25,6 +28,39 @@ export default function Generator() {
   const [currentDifficulty, setCurrentDifficulty] =
     useState<string>("intermediate");
   const [hasGeneratedCards, setHasGeneratedCards] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
+        if (sessionError) throw sessionError;
+
+        if (!session) {
+          navigate("/login");
+          return;
+        }
+
+        setUser(session.user);
+        setSession(session);
+      } catch (error) {
+        console.error("Error:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar os dados do usuário.",
+          variant: "destructive",
+        });
+        navigate("/login");
+      }
+    };
+
+    getUser();
+  }, [navigate, toast]);
 
   // Função para converter o nível de dificuldade para um nome amigável
   const getDifficultyLabel = (difficulty: string): string => {
@@ -41,6 +77,16 @@ export default function Generator() {
   };
 
   const handleGenerateFlashcards = async (data: GenerateFlashcardsRequest) => {
+    if (!session || !user) {
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado para gerar flashcards.",
+        variant: "destructive",
+      });
+      navigate("/login");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -48,11 +94,8 @@ export default function Generator() {
       setCurrentDifficulty(data.difficulty);
 
       if (USE_GO_BACKEND) {
-        // Usando a API Go real com o user_id fornecido
-        const response = await generateFlashcards(
-          data,
-          "f3884046-387f-4b3a-b8a6-018eec440a3a"
-        );
+        // Usando a API Go real com token de autenticação
+        const response = await generateFlashcards(data, session.access_token);
 
         // Adapta a resposta do formato Go para o formato do frontend
         const adaptedFlashcards = adaptGoToFrontendResponse(response);
@@ -119,6 +162,15 @@ export default function Generator() {
       setLoading(false);
     }
   };
+
+  // Show loading while checking authentication
+  if (!session || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f8fafa]">

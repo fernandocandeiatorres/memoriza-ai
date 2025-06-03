@@ -5,6 +5,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/deepseek"
 	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/model"
@@ -16,10 +17,15 @@ import (
 type FlashcardHandler struct {
 	flashcardService services.FlashcardService
 	flashcardSetService services.FlashcardSetService
+	userService services.UserService
 }
 
-func NewFlashcardHandler(fs services.FlashcardService, fss services.FlashcardSetService) *FlashcardHandler {
-	return &FlashcardHandler{flashcardService: fs, flashcardSetService: fss}
+func NewFlashcardHandler(fs services.FlashcardService, fss services.FlashcardSetService, us services.UserService) *FlashcardHandler {
+	return &FlashcardHandler{
+		flashcardService: fs, 
+		flashcardSetService: fss,
+		userService: us,
+	}
 }
 
 // FlashcardResponse represents the format expected by the frontend
@@ -40,17 +46,45 @@ func (h *FlashcardHandler) GenerateFlashcards(c *gin.Context) {
 		return
 	}
 
+	// Get user info from context (set by auth middleware)
+	userIDStr, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
+		return
+	}
+
+	userEmail, _ := c.Get("userEmail") // Optional, might be empty
+
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+		return
+	}
+
 	ctx := context.Background()
+
+	// Ensure user exists in our database
+	email := ""
+	if userEmail != nil {
+		email = userEmail.(string)
+	}
+	
+	_, err = h.userService.EnsureUserExists(ctx, userID, email)
+	if err != nil {
+		log.Printf("Error ensuring user exists: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to verify user"})
+		return
+	}
 
 	// 1. Criar o FlashcardSet
 	set := model.FlashcardSet{
-		UserID:    promptReq.UserID,
+		UserID:    userID, // Use userID from context instead of request body
 		Topic:     promptReq.Prompt, // opcional: extração simples
 	}
 	setID, err := h.flashcardSetService.Create(ctx, set)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create flashcard set"})
-		log.Fatalln("Erro ao criar o flashcard set:", err)
+		log.Printf("Erro ao criar o flashcard set: %v", err)
 		return
 	}
 
@@ -69,28 +103,37 @@ func (h *FlashcardHandler) GenerateFlashcards(c *gin.Context) {
     }
 
 	// Log the generated flashcards for debugging purposes.
-	log.Printf("Criado set ID: %d com %d flashcards", setID, len(stored))
+	log.Printf("Criado set ID: %s com %d flashcards para usuário %s", setID.String(), len(stored), userID.String())
 
 	// Respond with the generated flashcards.
 	c.JSON(http.StatusOK, gin.H{"flashcard_set_id": setID, "flashcards": stored})
 }
 
 func (h *FlashcardHandler) GetFlashcardsBySetID(c *gin.Context) {
-	
 	setIDStr := c.Param("set_id")
+	log.Printf("Received request for flashcards with set_id: %s", setIDStr)
+	
 	setID, err := uuid.Parse(setIDStr)
 	if err != nil {
+		log.Printf("Invalid flashcard set ID format: %s, error: %v", setIDStr, err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid flashcard set ID"})
 		return
 	}
 
-	flashcards, err := h.flashcardService.GetAllBySetID(context.Background(), setID)
+	// Create context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	log.Printf("Calling flashcard service to get flashcards for set: %s", setID.String())
+	flashcards, err := h.flashcardService.GetAllBySetID(ctx, setID)
 	if err != nil {
+		log.Printf("Erro ao obter os flashcards para set %s: %v", setID.String(), err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch flashcards"})
-		log.Println("Erro ao obter os flashcards:", err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"flashcards": flashcards} )
+	
+	log.Printf("Successfully retrieved %d flashcards for set %s", len(flashcards), setID.String())
+	c.JSON(http.StatusOK, gin.H{"flashcards": flashcards})
 }
 
 func (h *FlashcardHandler) GetFlashcardsByTopic(c *gin.Context) {
