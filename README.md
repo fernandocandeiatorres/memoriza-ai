@@ -55,10 +55,34 @@ memoriza-ai/
 
 ## Funcionalidades Principais
 
-- 🔍 **Geração de Flashcards**: Insira um tópico médico e selecione o nível de dificuldade
+- 🔍 **Geração de Flashcards por Tópico**: Insira um tópico médico e selecione o nível de dificuldade
+- 📄 **Geração de Flashcards por Resumo**: Envie resumos, PDFs ou imagens para gerar flashcards baseados no conteúdo
 - 📱 **Responsivo**: Interface adaptada para dispositivos móveis e desktop
 - 📊 **Indicadores Visuais**: Cada nível de dificuldade utiliza cores distintas
 - 🔄 **Navegação Intuitiva**: Controles para navegar entre os flashcards gerados
+- 📁 **Suporte a Múltiplos Formatos**: Texto, PDF e imagens (JPG, PNG, WebP)
+
+## Modos de Geração
+
+### 1. Geração por Tópico
+
+- Insira um tópico específico (ex: "Cardiologia", "Farmacologia")
+- Selecione o nível de dificuldade (Iniciante, Intermediário, Avançado)
+- Gera 10 flashcards focados no tópico escolhido
+
+### 2. Geração por Resumo (NOVA FUNCIONALIDADE)
+
+- **Texto**: Cole seus resumos, anotações ou material de estudo
+- **PDF**: Faça upload de documentos PDF com conteúdo médico
+- **Imagem**: Envie fotos de livros, slides ou anotações manuscritas
+- Selecione o nível de dificuldade desejado
+- Gera 10 flashcards baseados no conteúdo fornecido
+
+### Formatos Suportados
+
+- **Texto**: Qualquer texto colado diretamente
+- **PDF**: Arquivos PDF até 10MB
+- **Imagens**: JPG, PNG, WebP até 10MB
 
 ## Desenvolvimento
 

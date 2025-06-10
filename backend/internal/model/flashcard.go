@@ -30,3 +30,10 @@ type PromptRequest struct {
 	Level string `json:"level"`
 }
 
+type SummaryRequest struct {
+	Content     string  `json:"content" binding:"required"`
+	ContentType string  `json:"content_type" binding:"required,oneof=text pdf image"`
+	Level       string  `json:"level"`
+	FileName    *string `json:"file_name,omitempty"`
+}
+

@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import Generator from "@/pages/Generator";
+import SummaryGenerator from "@/pages/SummaryGenerator";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Register from "./pages/Register";
@@ -48,6 +49,9 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/generator">
           <ProtectedRoute component={Generator} />
+        </Route>
+        <Route path="/summary-generator">
+          <ProtectedRoute component={SummaryGenerator} />
         </Route>
         <Route path="/dashboard">
           <ProtectedRoute component={Dashboard} />

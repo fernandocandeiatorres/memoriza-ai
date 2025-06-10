@@ -57,7 +57,12 @@ export default function Navbar() {
             </Link>
             <Link href="/generator" onClick={handleGeneratorClick}>
               <a className="text-neutral-dark hover:text-primary px-3 py-2 text-sm font-medium">
-                Generator
+                Gerador por Tópico
+              </a>
+            </Link>
+            <Link href="/summary-generator" onClick={handleGeneratorClick}>
+              <a className="text-neutral-dark hover:text-primary px-3 py-2 text-sm font-medium">
+                Gerador por Resumo
               </a>
             </Link>
             <Link href="/#features">
@@ -147,7 +152,12 @@ export default function Navbar() {
           </Link>
           <Link href="/generator" onClick={handleGeneratorClick}>
             <a className="block text-neutral-dark hover:text-primary px-3 py-2 text-base font-medium">
-              Generator
+              Gerador por Tópico
+            </a>
+          </Link>
+          <Link href="/summary-generator" onClick={handleGeneratorClick}>
+            <a className="block text-neutral-dark hover:text-primary px-3 py-2 text-base font-medium">
+              Gerador por Resumo
             </a>
           </Link>
           <Link href="/#features" onClick={handleMobileLinkClick}>

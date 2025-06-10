@@ -34,12 +34,24 @@ export const generateFlashcardsSchema = z.object({
     .default("intermediate"),
 });
 
+export const generateFromSummarySchema = z.object({
+  content: z.string().min(10, "Content must be at least 10 characters"),
+  contentType: z.enum(["text", "pdf", "image"]),
+  difficulty: z
+    .enum(["beginner", "intermediate", "advanced"])
+    .default("intermediate"),
+  fileName: z.string().optional(),
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertFlashcard = z.infer<typeof insertFlashcardSchema>;
 export type Flashcard = typeof flashcards.$inferSelect;
 export type GenerateFlashcardsRequest = z.infer<
   typeof generateFlashcardsSchema
+>;
+export type GenerateFromSummaryRequest = z.infer<
+  typeof generateFromSummarySchema
 >;
 
 // Tipos para integração com o backend Go
@@ -76,6 +88,14 @@ export interface GoGenerateFlashcardsRequest {
   level?: string; // Nível de dificuldade para os flashcards (renamed from 'difficulty')
 }
 
+// Tipo do request para geração de flashcards a partir de resumo no backend Go
+export interface GoGenerateFromSummaryRequest {
+  content: string; // Conteúdo do resumo (texto, base64 de PDF/imagem)
+  content_type: "text" | "pdf" | "image"; // Tipo do conteúdo
+  level?: string; // Nível de dificuldade
+  file_name?: string; // Nome do arquivo (opcional)
+}
+
 // Adaptador para converter o formato do frontend para o formato do Go backend
 export function adaptFrontendToGoRequest(
   frontendRequest: GenerateFlashcardsRequest
@@ -96,4 +116,16 @@ export function adaptGoToFrontendResponse(
     question: goFlashcard.question_text,
     answer: goFlashcard.answer_text,
   }));
+}
+
+// Adaptador para converter o formato do frontend para o formato do Go backend (resumo)
+export function adaptFrontendToGoSummaryRequest(
+  frontendRequest: GenerateFromSummaryRequest
+): GoGenerateFromSummaryRequest {
+  return {
+    content: frontendRequest.content,
+    content_type: frontendRequest.contentType,
+    level: frontendRequest.difficulty,
+    file_name: frontendRequest.fileName,
+  };
 }

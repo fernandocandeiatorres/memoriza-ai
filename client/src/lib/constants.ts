@@ -18,6 +18,7 @@ export const ROUTES = {
   LOGIN: "/login",
   REGISTER: "/register",
   GENERATOR: "/generator",
+  SUMMARY_GENERATOR: "/summary-generator",
   DASHBOARD: "/dashboard",
 } as const;
 

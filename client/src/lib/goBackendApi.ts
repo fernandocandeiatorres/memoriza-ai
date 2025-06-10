@@ -1,8 +1,11 @@
 import {
-  GenerateFlashcardsRequest,
-  GenerateFlashcardsResponse,
-  GoGenerateFlashcardsRequest,
+  type GoGenerateFlashcardsRequest,
+  type GenerateFlashcardsResponse,
+  type GoGenerateFromSummaryRequest,
+  type GenerateFlashcardsRequest,
+  type GenerateFromSummaryRequest,
   adaptFrontendToGoRequest,
+  adaptFrontendToGoSummaryRequest,
 } from "@shared/schema";
 
 // URL base do backend Go - acesso direto ao backend
@@ -72,122 +75,155 @@ async function goApiRequest<T>(
 }
 
 /**
- * Serviço para geração de flashcards usando o backend Go
- *
- * @param request - Requisição contendo o tópico para gerar flashcards
+ * Faz uma requisição HTTP genérica para o backend Go
+ * @param endpoint - Endpoint da API (ex: '/flashcards/generate')
  * @param authToken - Token de autenticação do usuário
- * @returns Uma promessa que resolve para os flashcards gerados
+ * @param options - Opções do fetch (método, corpo, headers)
+ */
+async function makeGoBackendRequest<T>(
+  endpoint: string,
+  authToken: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const baseUrl =
+    import.meta.env.VITE_GO_BACKEND_URL || "http://localhost:8080";
+  const url = `${baseUrl}/api/v1${endpoint}`;
+
+  const defaultHeaders = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${authToken}`,
+  };
+
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...defaultHeaders,
+      ...options.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.text();
+    throw new Error(`Backend Go error: ${response.status} - ${errorData}`);
+  }
+
+  return response.json() as T;
+}
+
+/**
+ * Gera flashcards baseados em um tópico usando o backend Go
+ * @param request - Dados da requisição (tópico e dificuldade)
+ * @param authToken - Token de autenticação do usuário
+ * @returns Resposta com o conjunto de flashcards gerado
  */
 export async function generateFlashcards(
   request: GenerateFlashcardsRequest,
   authToken: string
 ): Promise<GenerateFlashcardsResponse> {
-  // Convert frontend format to Go backend expected format
-  const goRequest: GoGenerateFlashcardsRequest =
-    adaptFrontendToGoRequest(request);
+  const goRequest = adaptFrontendToGoRequest(request);
 
-  console.log("goRequest", goRequest);
-  try {
-    // Faz a requisição para o endpoint de geração de flashcards
-    const data = await goApiRequest<GenerateFlashcardsResponse>(
-      "/flashcards/generate",
-      {
-        method: "POST",
-        body: JSON.stringify(goRequest),
-      },
-      authToken
-    );
-
-    return data;
-  } catch (error) {
-    console.error("Erro ao gerar flashcards:", error);
-    throw error;
-  }
+  return makeGoBackendRequest<GenerateFlashcardsResponse>(
+    "/flashcards/generate",
+    authToken,
+    {
+      method: "POST",
+      body: JSON.stringify(goRequest),
+    }
+  );
 }
 
 /**
- * Obtém os detalhes de um conjunto de flashcards específico
- *
+ * Gera flashcards baseados em resumo/conteúdo usando o backend Go
+ * @param request - Dados da requisição (conteúdo, tipo e dificuldade)
+ * @param authToken - Token de autenticação do usuário
+ * @returns Resposta com o conjunto de flashcards gerado
+ */
+export async function generateFlashcardsFromSummary(
+  request: GenerateFromSummaryRequest,
+  authToken: string
+): Promise<GenerateFlashcardsResponse> {
+  const goRequest = adaptFrontendToGoSummaryRequest(request);
+
+  return makeGoBackendRequest<GenerateFlashcardsResponse>(
+    "/flashcards/generate-from-summary",
+    authToken,
+    {
+      method: "POST",
+      body: JSON.stringify(goRequest),
+    }
+  );
+}
+
+/**
+ * Obtém detalhes de um conjunto de flashcards específico
  * @param setId - ID do conjunto de flashcards
  * @param authToken - Token de autenticação do usuário
- * @returns Os dados do conjunto de flashcards com seus cartões
+ * @returns Detalhes do conjunto de flashcards
  */
-export async function getFlashcardSet(setId: string, authToken: string) {
-  const response = await goApiRequest(`/flashcardsets/${setId}`, {}, authToken);
-
-  // The API returns { "flashcard_set": {...} }, so we need to extract the object
-  if (response && typeof response === "object" && "flashcard_set" in response) {
-    return response.flashcard_set;
+export async function getFlashcardSet(
+  setId: string,
+  authToken: string
+): Promise<any> {
+  try {
+    return makeGoBackendRequest<any>(`/flashcardsets/${setId}`, authToken, {
+      method: "GET",
+    });
+  } catch (error) {
+    console.error("Error fetching flashcard set:", error);
+    throw new Error("Failed to fetch flashcard set from the server");
   }
-
-  return response;
 }
 
 /**
  * Obtém todos os flashcards de um conjunto específico
- *
  * @param setId - ID do conjunto de flashcards
  * @param authToken - Token de autenticação do usuário
  * @returns Lista de flashcards do conjunto
  */
-export async function getFlashcardsBySetId(setId: string, authToken: string) {
-  const response = await goApiRequest(
-    `/flashcardsets/${setId}/flashcards`,
-    {},
-    authToken
-  );
+export async function getFlashcardsBySetId(
+  setId: string,
+  authToken: string
+): Promise<any[]> {
+  try {
+    const response = await makeGoBackendRequest<{ flashcards: any[] }>(
+      `/flashcardsets/${setId}/flashcards`,
+      authToken,
+      {
+        method: "GET",
+      }
+    );
 
-  // The API returns { "flashcards": [...] }, so we need to extract the array
-  if (response && typeof response === "object" && "flashcards" in response) {
-    const flashcards = response.flashcards || [];
-
-    // Verify that flashcards is an array before mapping
-    if (Array.isArray(flashcards)) {
-      // Convert backend format (question_text, answer_text) to frontend format (question, answer)
-      return flashcards.map((flashcard: any) => ({
-        id: flashcard.id,
-        question: flashcard.question_text,
-        answer: flashcard.answer_text,
-        topic: "", // Not used in details page
-        // Keep original fields for reference if needed
-        question_text: flashcard.question_text,
-        answer_text: flashcard.answer_text,
-        card_order: flashcard.card_order,
-        flashcard_set_id: flashcard.flashcard_set_id,
-        created_at: flashcard.created_at,
-        updated_at: flashcard.updated_at,
-      }));
-    }
+    return response.flashcards || [];
+  } catch (error) {
+    console.error("Error fetching flashcards:", error);
+    throw new Error("Failed to fetch flashcards from the server");
   }
-
-  return [];
 }
 
 /**
  * Obtém todos os conjuntos de flashcards de um usuário
- *
  * @param userId - ID do usuário
  * @param authToken - Token de autenticação do usuário
  * @returns Lista de conjuntos de flashcards do usuário
  */
-export async function getUserFlashcardSets(userId: string, authToken: string) {
-  const response = await goApiRequest(
-    `/users/${userId}/flashcardsets`,
-    {},
-    authToken
-  );
+export async function getUserFlashcardSets(
+  userId: string,
+  authToken: string
+): Promise<any[]> {
+  try {
+    const response = await makeGoBackendRequest<{ flashcard_sets: any[] }>(
+      `/users/${userId}/flashcardsets`,
+      authToken,
+      {
+        method: "GET",
+      }
+    );
 
-  // The API returns { "flashcard_sets": [...] }, so we need to extract the array
-  if (
-    response &&
-    typeof response === "object" &&
-    "flashcard_sets" in response
-  ) {
     return response.flashcard_sets || [];
+  } catch (error) {
+    console.error("Error fetching user flashcard sets:", error);
+    throw new Error("Failed to fetch flashcard sets from the server");
   }
-
-  // Fallback: if response is already an array or null/undefined
-  return response || [];
 }
 
 /**
