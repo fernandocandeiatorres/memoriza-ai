@@ -193,7 +193,22 @@ export async function getFlashcardsBySetId(
       }
     );
 
-    return response.flashcards || [];
+    const flashcards = response.flashcards || [];
+
+    // Mapear campos do backend Go para o formato esperado pelo frontend
+    return flashcards.map((flashcard: any) => ({
+      id: flashcard.id,
+      topic: "", // Não usado na visualização de detalhes
+      question: flashcard.question_text, // Mapear question_text para question
+      answer: flashcard.answer_text, // Mapear answer_text para answer
+      // Manter campos originais para referência se necessário
+      question_text: flashcard.question_text,
+      answer_text: flashcard.answer_text,
+      card_order: flashcard.card_order,
+      flashcard_set_id: flashcard.flashcard_set_id,
+      created_at: flashcard.created_at,
+      updated_at: flashcard.updated_at,
+    }));
   } catch (error) {
     console.error("Error fetching flashcards:", error);
     throw new Error("Failed to fetch flashcards from the server");
