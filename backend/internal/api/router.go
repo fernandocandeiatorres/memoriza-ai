@@ -3,6 +3,7 @@ package api
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/handler"
 	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/middleware"
@@ -24,10 +25,12 @@ func SetupRouter(flashcardHandler *handler.FlashcardHandler, flashcardSetHandler
         }))
 
         // Health check endpoint (não precisa de autenticação)
-        router.GET("/api/v1/health", func(c *gin.Context) {
+        router.GET("/health", func(c *gin.Context) {
                 c.JSON(200, gin.H{
-                        "status": "ok",
-                        "message": "API is running",
+                        "status":    "ok",
+                        "message":   "API is running",
+                        "version":   "1.0.0",
+                        "timestamp": time.Now().Format(time.RFC3339),
                 })
         })
 
