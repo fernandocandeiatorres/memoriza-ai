@@ -23,6 +23,14 @@ func SetupRouter(flashcardHandler *handler.FlashcardHandler, flashcardSetHandler
                 AllowCredentials: true,
         }))
 
+        // Health check endpoint (não precisa de autenticação)
+        router.GET("/api/v1/health", func(c *gin.Context) {
+                c.JSON(200, gin.H{
+                        "status": "ok",
+                        "message": "API is running",
+                })
+        })
+
         // Group endpoints under /api/v1
         apiV1 := router.Group("/api/v1", middleware.SupabaseAuth())
         {
@@ -43,8 +51,6 @@ func SetupRouter(flashcardHandler *handler.FlashcardHandler, flashcardSetHandler
                         c.Status(200)
                 })
         }
-
-    
 
         return router
 }
