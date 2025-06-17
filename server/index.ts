@@ -36,6 +36,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// Add this endpoint to provide frontend configuration
+app.get("/api/config", (req, res) => {
+  res.json({
+    supabaseUrl: process.env.SUPA_PROJECT_URL,
+    supabaseAnonKey: process.env.SUPA_ANON_KEY,
+    goBackendUrl: process.env.GO_BACKEND_URL,
+  });
+});
+
 (async () => {
   // Configurar variáveis de ambiente para o proxy Go
   process.env.USE_GO_BACKEND = "true";

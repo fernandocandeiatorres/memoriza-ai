@@ -104,7 +104,7 @@ O backend Go é responsável por:
 ### Variáveis de Ambiente
 
 - `DEEPISEEK_API_KEY`: Chave para a API DeepSeek (necessária para o modo real)
-- `VITE_GO_BACKEND_URL`: URL para o backend Go (padrão: http://localhost:8080/api/v1)
+- `FRONTEND_GO_BACKEND_URL`: URL para o backend Go (padrão: http://localhost:8080/api/v1)
 
 ## Modo de Demonstração vs. Modo Real
 

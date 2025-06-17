@@ -7,14 +7,14 @@ import {
   adaptFrontendToGoRequest,
   adaptFrontendToGoSummaryRequest,
 } from "@shared/schema";
+import { getConfig } from "./config";
 
 // URL base do backend Go - acesso direto ao backend
-// Podemos usar a URL definida nas variáveis de ambiente ou a URL padrão
-const GO_API_BASE_URL =
+const GO_BACKEND_URL =
   import.meta.env.VITE_GO_BACKEND_URL || "http://localhost:8080/api/v1";
 
 // Registra a URL base usada para fins de depuração
-console.log(`Backend Go URL: ${GO_API_BASE_URL}`);
+console.log(`Backend Go URL: ${GO_BACKEND_URL}`);
 
 /**
  * Realiza uma requisição para o backend Go
@@ -30,7 +30,7 @@ async function goApiRequest<T>(
   options: RequestInit = {},
   authToken?: string
 ): Promise<T> {
-  const url = `${GO_API_BASE_URL}${endpoint}`;
+  const url = `${GO_BACKEND_URL}${endpoint}`;
 
   // Configuração padrão para requisições JSON
   const defaultHeaders: Record<string, string> = {
@@ -266,4 +266,9 @@ export async function getUserFlashcardsByTopic(
   }
 
   return response || [];
+}
+
+export async function getBackendUrl() {
+  const config = await getConfig();
+  return config.goBackendUrl;
 }
