@@ -13,59 +13,59 @@ import (
 
 // SetupRouter initializes the Gin router and maps the API routes.
 func SetupRouter(flashcardHandler *handler.FlashcardHandler, flashcardSetHandler *handler.FlashcardSetHandler) *gin.Engine {
-        router := gin.Default()
+	router := gin.Default()
 
-        // Configure CORS
-        router.Use(cors.New(cors.Config{
-                AllowOrigins:     []string{"http://localhost:5173", "http://localhost:5000", "*"},
-                AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-                AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
-                ExposeHeaders:    []string{"Content-Length"},
-                AllowCredentials: true,
-        }))
+	// Configure CORS
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"https://memoriza-ai.vercel.app", "http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
 
-        // Health check endpoint (não precisa de autenticação)
-        router.GET("/health", func(c *gin.Context) {
-                c.JSON(200, gin.H{
-                        "status":    "ok",
-                        "message":   "API is running",
-                        "version":   "1.0.0",
-                        "timestamp": time.Now().Format(time.RFC3339),
-                })
-        })
+	// Health check endpoint (não precisa de autenticação)
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status":    "ok",
+			"message":   "API is running",
+			"version":   "1.0.0",
+			"timestamp": time.Now().Format(time.RFC3339),
+		})
+	})
 
-        // Group endpoints under /api/v1
-        apiV1 := router.Group("/api/v1", middleware.SupabaseAuth())
-        {
-                apiV1.GET("flashcardsets/:set_id/flashcards", flashcardHandler.GetFlashcardsBySetID)
-                apiV1.GET("flashcardsets/:set_id", flashcardSetHandler.GetFlashcardSetByID)
+	// Group endpoints under /api/v1
+	apiV1 := router.Group("/api/v1", middleware.SupabaseAuth())
+	{
+		apiV1.GET("flashcardsets/:set_id/flashcards", flashcardHandler.GetFlashcardsBySetID)
+		apiV1.GET("flashcardsets/:set_id", flashcardSetHandler.GetFlashcardSetByID)
 
-                apiV1.GET("/users/:user_id/flashcardsets", flashcardSetHandler.GetFlashcardSets)
-                apiV1.GET("/users/:user_id/flashcards-topic", flashcardHandler.GetFlashcardsByTopic)
-                apiV1.GET("/users/:user_id/flashcards", flashcardHandler.GetAllUserFlashcards)
+		apiV1.GET("/users/:user_id/flashcardsets", flashcardSetHandler.GetFlashcardSets)
+		apiV1.GET("/users/:user_id/flashcards-topic", flashcardHandler.GetFlashcardsByTopic)
+		apiV1.GET("/users/:user_id/flashcards", flashcardHandler.GetAllUserFlashcards)
 
-                apiV1.POST("/flashcards/generate", flashcardHandler.GenerateFlashcards)
-                apiV1.POST("/flashcards/generate-from-summary", flashcardHandler.GenerateFlashcardsFromSummary)
-                // Add OPTIONS route for CORS preflight
-                apiV1.OPTIONS("/flashcards/generate", func(c *gin.Context) {
-                        c.Status(200)
-                })
-                apiV1.OPTIONS("/flashcards/generate-from-summary", func(c *gin.Context) {
-                        c.Status(200)
-                })
-        }
+		apiV1.POST("/flashcards/generate", flashcardHandler.GenerateFlashcards)
+		apiV1.POST("/flashcards/generate-from-summary", flashcardHandler.GenerateFlashcardsFromSummary)
+		// Add OPTIONS route for CORS preflight
+		apiV1.OPTIONS("/flashcards/generate", func(c *gin.Context) {
+			c.Status(200)
+		})
+		apiV1.OPTIONS("/flashcards/generate-from-summary", func(c *gin.Context) {
+			c.Status(200)
+		})
+	}
 
-        return router
+	return router
 }
 
 // RunServer starts the Gin server with the port specified in the environment.
 func RunServer(router *gin.Engine) {
-        port := os.Getenv("PORT")
-        if port == "" {
-                port = "8080"
-        }
-        log.Printf("Servidor rodando na porta %s", port)
-        router.Run(":" + port)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	log.Printf("Servidor rodando na porta %s", port)
+	router.Run(":" + port)
 }
 
 // GET ALL FLASHCARDS SETS OF A USER, AND ALSO GET ALL THE FLASHCARDS FROM EACH FLASHCARD SET ON THIS RESPONSE
