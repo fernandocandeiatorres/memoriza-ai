@@ -1,0 +1,10 @@
+- user clica para gerar, envia requisicao para backend e no backend vai checar se o user possui creditos/vip
+ou
+- user clica em gerar, o frontend manda requisicao p/ backend, recebe o user e checa no frontend se o user é premium
+
+front -> back -> bd -> back -> front
+front -> back -> bd -> front
+( qual melhor ? )
+
+
+- creditos ou status
