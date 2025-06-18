@@ -39,6 +39,7 @@ export default function Login() {
         </div>
         <Auth
           supabaseClient={supabase}
+          view="sign_in"
           appearance={{ theme: ThemeSupa }}
           providers={["google", "github"]}
           theme="light"

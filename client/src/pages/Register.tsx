@@ -14,6 +14,8 @@ export default function Register() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth event:", event, session);
+
       if (event === "SIGNED_IN" && session) {
         toast({
           title: "Conta criada com sucesso!",
@@ -39,17 +41,23 @@ export default function Register() {
         </div>
         <Auth
           supabaseClient={supabase}
+          view="sign_up"
           appearance={{ theme: ThemeSupa }}
           providers={["google", "github"]}
           theme="light"
+          showLinks={false}
           localization={{
             variables: {
               sign_up: {
                 email_label: "Email",
                 password_label: "Senha",
+                button_label: "Criar conta",
+                loading_button_label: "Criando conta...",
+                link_text: "Já tem uma conta? Faça login",
               },
             },
           }}
+          redirectTo={`${window.location.origin}/`}
         />
       </div>
     </div>
