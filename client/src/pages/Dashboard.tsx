@@ -40,6 +40,10 @@ export default function Dashboard() {
   const { user, session } = useProtectedRoute();
   const { toast } = useToast();
 
+  // Debug: Print backend URL
+  console.log("VITE_GO_BACKEND_URL:", import.meta.env.VITE_GO_BACKEND_URL);
+  console.log("All env vars:", import.meta.env);
+
   // State management
   const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);
   const [dataLoading, setDataLoading] = useState(false);

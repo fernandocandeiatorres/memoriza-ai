@@ -89,6 +89,13 @@ async function makeGoBackendRequest<T>(
     import.meta.env.VITE_GO_BACKEND_URL || "http://localhost:8080";
   const url = `${baseUrl}/api/v1${endpoint}`;
 
+  // Debug logs
+  console.log("🔗 Backend Request Debug:");
+  console.log("  - VITE_GO_BACKEND_URL:", import.meta.env.VITE_GO_BACKEND_URL);
+  console.log("  - baseUrl:", baseUrl);
+  console.log("  - endpoint:", endpoint);
+  console.log("  - final URL:", url);
+
   const defaultHeaders = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${authToken}`,
