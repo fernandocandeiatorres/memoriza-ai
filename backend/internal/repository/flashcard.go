@@ -40,7 +40,6 @@ func (r *flashcardRepo) GetAllBySetID(ctx context.Context, setID uuid.UUID) ([]m
               WHERE flashcard_set_id = $1 
               ORDER BY card_order`
     
-    log.Printf("Executing query for flashcard set ID: %s", setID.String())
     
     rows, err := r.db.QueryContext(ctx, query, setID)
     if err != nil {
@@ -55,15 +54,12 @@ func (r *flashcardRepo) GetAllBySetID(ctx context.Context, setID uuid.UUID) ([]m
         rowCount++
         var fc model.Flashcard
         
-        // Explicitly log the scan operation
-        log.Printf("Scanning row %d for flashcard set: %s", rowCount, setID.String())
-        
+
         if err := rows.Scan(&fc.ID, &fc.FlashcardSetID, &fc.CardOrder, &fc.QuestionText, &fc.AnswerText, &fc.CreatedAt, &fc.UpdatedAt); err != nil {
             log.Printf("Error scanning row %d: %v", rowCount, err)
             return nil, err
         }
         
-        log.Printf("Successfully scanned flashcard %d: ID=%s, Question=%s", rowCount, fc.ID.String(), fc.QuestionText)
         flashcards = append(flashcards, fc)
     }
     
@@ -73,7 +69,6 @@ func (r *flashcardRepo) GetAllBySetID(ctx context.Context, setID uuid.UUID) ([]m
         return nil, err
     }
     
-    log.Printf("Successfully retrieved %d flashcards for set %s", len(flashcards), setID.String())
     return flashcards, nil
 }
 

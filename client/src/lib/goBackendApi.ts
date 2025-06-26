@@ -14,7 +14,6 @@ const GO_BACKEND_URL =
   import.meta.env.VITE_GO_BACKEND_URL || "http://localhost:8080/api/v1";
 
 // Registra a URL base usada para fins de depuração
-console.log(`Backend Go URL: ${GO_BACKEND_URL}`);
 
 /**
  * Realiza uma requisição para o backend Go
@@ -42,7 +41,7 @@ async function goApiRequest<T>(
     defaultHeaders["Authorization"] = `Bearer ${authToken}`;
   }
 
-  console.log("authToken", authToken);
+  "authToken", authToken;
 
   const defaultOptions: RequestInit = {
     headers: {
@@ -88,13 +87,6 @@ async function makeGoBackendRequest<T>(
   const baseUrl =
     import.meta.env.VITE_GO_BACKEND_URL || "http://localhost:8080";
   const url = `${baseUrl}/api/v1${endpoint}`;
-
-  // Debug logs
-  console.log("🔗 Backend Request Debug:");
-  console.log("  - VITE_GO_BACKEND_URL:", import.meta.env.VITE_GO_BACKEND_URL);
-  console.log("  - baseUrl:", baseUrl);
-  console.log("  - endpoint:", endpoint);
-  console.log("  - final URL:", url);
 
   const defaultHeaders = {
     "Content-Type": "application/json",

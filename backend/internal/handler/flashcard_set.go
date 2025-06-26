@@ -77,7 +77,6 @@ func (h *FlashcardSetHandler) GetFlashcardSets(c *gin.Context) {
 
 func (h *FlashcardSetHandler) GetFlashcardSetByID(c *gin.Context) {
 	fsetIDStr := c.Param("set_id")
-	log.Printf("Received request for flashcard set with set_id: %s", fsetIDStr)
 	
 	fsetID, err := uuid.Parse(fsetIDStr)
 	if err != nil {
@@ -90,7 +89,6 @@ func (h *FlashcardSetHandler) GetFlashcardSetByID(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	
-	log.Printf("Calling flashcard set service to get set: %s", fsetID.String())
 	flashcardSet, err := h.flashcardSetService.GetByID(ctx, fsetID)
 	if err != nil {
 		log.Printf("Erro ao obter o flashcard set %s: %v", fsetID.String(), err)
@@ -98,6 +96,5 @@ func (h *FlashcardSetHandler) GetFlashcardSetByID(c *gin.Context) {
 		return
 	}
 	
-	log.Printf("Successfully retrieved flashcard set: %s with topic: %s", fsetID.String(), flashcardSet.Topic)
 	c.JSON(http.StatusOK, gin.H{"flashcard_set": flashcardSet})
 }

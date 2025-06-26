@@ -102,8 +102,6 @@ func (h *FlashcardHandler) GenerateFlashcards(c *gin.Context) {
         return
     }
 
-	// Log the generated flashcards for debugging purposes.
-	log.Printf("Criado set ID: %s com %d flashcards para usuário %s", setID.String(), len(stored), userID.String())
 
 	// Respond with the generated flashcards.
 	c.JSON(http.StatusOK, gin.H{"flashcard_set_id": setID, "flashcards": stored})
@@ -186,8 +184,6 @@ func (h *FlashcardHandler) GenerateFlashcardsFromSummary(c *gin.Context) {
 		return
 	}
 
-	// Log the generated flashcards for debugging purposes.
-	log.Printf("Criado set ID: %s com %d flashcards do resumo para usuário %s", setID.String(), len(stored), userID.String())
 
 	// Respond with the generated flashcards.
 	c.JSON(http.StatusOK, gin.H{"flashcard_set_id": setID, "flashcards": stored})
@@ -216,7 +212,6 @@ func (h *FlashcardHandler) GetFlashcardsBySetID(c *gin.Context) {
 		return
 	}
 	
-	log.Printf("Successfully retrieved %d flashcards for set %s", len(flashcards), setID.String())
 	c.JSON(http.StatusOK, gin.H{"flashcards": flashcards})
 }
 
