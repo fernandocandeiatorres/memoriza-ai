@@ -9,9 +9,28 @@ import {
 } from "@shared/schema";
 import { getConfig } from "./config";
 
+// Função para determinar a URL do backend baseada no ambiente
+function getBackendBaseUrl(): string {
+  // Se estiver definido explicitamente nas variáveis de ambiente, usa essa
+  if (import.meta.env.VITE_GO_BACKEND_URL) {
+    return import.meta.env.VITE_GO_BACKEND_URL;
+  }
+
+  // Se estiver em produção (Vercel), usa a URL do Railway
+  if (import.meta.env.PROD && typeof window !== "undefined") {
+    if (window.location.hostname.includes("vercel.app")) {
+      return "https://memoriza-ai-production.up.railway.app/api/v1";
+    }
+  }
+
+  // Fallback para desenvolvimento local
+  return "http://localhost:8080/api/v1";
+}
+
 // URL base do backend Go - acesso direto ao backend
-const GO_BACKEND_URL =
-  import.meta.env.VITE_GO_BACKEND_URL || "http://localhost:8080/api/v1";
+const GO_BACKEND_URL = getBackendBaseUrl();
+
+console.log("Backend URL configured:", GO_BACKEND_URL);
 
 // Registra a URL base usada para fins de depuração
 
@@ -41,7 +60,7 @@ async function goApiRequest<T>(
     defaultHeaders["Authorization"] = `Bearer ${authToken}`;
   }
 
-  "authToken", authToken;
+  console.log("Request authToken:", authToken);
 
   const defaultOptions: RequestInit = {
     headers: {
@@ -84,8 +103,11 @@ async function makeGoBackendRequest<T>(
   authToken: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const baseUrl =
-    import.meta.env.VITE_GO_BACKEND_URL || "http://localhost:8080";
+  // Remove /api/v1 da função getBackendBaseUrl() se já incluído
+  const backendBaseUrl = getBackendBaseUrl();
+  const baseUrl = backendBaseUrl.endsWith("/api/v1")
+    ? backendBaseUrl.replace("/api/v1", "")
+    : backendBaseUrl;
   const url = `${baseUrl}/api/v1${endpoint}`;
 
   const defaultHeaders = {
