@@ -12,9 +12,17 @@ import (
 )
 
 func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Fatalf("Recovered from panic: %v", r)
+		}
+	}()
+
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, continuing with environment variables...")
 	}
+
+	
 	
 	// 1. Inicializa a conexão com o banco de dados (Supabase/PostgreSQL).
 	database.InitDB()
