@@ -12,10 +12,10 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, continuing with environment variables...")
 	}
+	
 	// 1. Inicializa a conexão com o banco de dados (Supabase/PostgreSQL).
 	database.InitDB()
 
@@ -35,6 +35,8 @@ func main() {
 
 	// 5. Setup Router
 	router := api.SetupRouter(flashcardHandler, flashcardSetHandler)
+
+	log.Println("Starting Memoriza AI backend...")
 
 	// 6. Inicia o servidor
 	api.RunServer(router)

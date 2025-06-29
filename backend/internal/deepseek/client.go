@@ -209,7 +209,6 @@ func generateFlashcardsWithChunking(content string, contentType string, level st
 
 	// Combina todas as respostas em uma única
 	finalResponse := utils.MergeFlashcardResponses(allResponses, 10)
-	log.Printf("Gerados %d flashcards total a partir de %d chunks", len(finalResponse.Flashcards), len(chunks))
 
 	return finalResponse, nil
 }
