@@ -1,0 +1,8 @@
+[providers]
+go = "1.24.1"
+
+[phases.build]
+cmds = ["go build -o main cmd/server/main.go"]
+
+[phases.start]
+cmd = "./main" 
