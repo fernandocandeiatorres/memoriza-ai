@@ -85,6 +85,7 @@ func RunServer(router *gin.Engine) {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
+		log.Println("PORT not set, using default port 8080")
 	}
 	log.Printf("Servidor rodando na porta %s", port)
 	router.Run(":" + port)

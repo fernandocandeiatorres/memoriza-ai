@@ -101,10 +101,6 @@ export default function SummaryForm({
         const estimatedPages = estimatePDFPages(file.size);
         const estimatedTokens = estimateTokensFromFileSize(file.size, fileType);
 
-        console.log(
-          `PDF Info: ${file.size} bytes, ~${estimatedPages} páginas, ~${estimatedTokens} tokens`
-        );
-
         if (file.size > MAX_PDF_SIZE_FOR_PROCESSING) {
           form.setError("content", {
             message: `PDF muito extenso (~${estimatedPages} páginas). Para melhor processamento, use PDFs com até 30-40 páginas ou divida o conteúdo.`,

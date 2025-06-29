@@ -1,0 +1,40 @@
+# Arquivos de desenvolvimento
+.env
+.env.local
+.env.development
+.env.production
+
+# Logs
+*.log
+
+# Dependências compiladas
+vendor/
+
+# Binários
+main
+*.exe
+
+# Arquivos de OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Scripts
+scripts/
+*.sh
+
+# Documentação
+README.md
+*.md
+
+# Supabase
+supabase/ 
