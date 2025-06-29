@@ -10,7 +10,11 @@ interface FlashcardsContainerProps {
   difficulty?: string;
 }
 
-export default function FlashcardsContainer({ flashcards, topic, difficulty = "intermediate" }: FlashcardsContainerProps) {
+export default function FlashcardsContainer({
+  flashcards,
+  topic,
+  difficulty = "intermediate",
+}: FlashcardsContainerProps) {
   // Função para obter o label da dificuldade
   const getDifficultyLabel = (): string => {
     switch (difficulty) {
@@ -24,7 +28,7 @@ export default function FlashcardsContainer({ flashcards, topic, difficulty = "i
         return difficulty;
     }
   };
-  
+
   // Função para obter a cor da dificuldade
   const getDifficultyColor = (): string => {
     switch (difficulty) {
@@ -54,22 +58,26 @@ export default function FlashcardsContainer({ flashcards, topic, difficulty = "i
 
   return (
     <div id="flashcards-container">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-8 gap-3 md:gap-4">
-        <div className="flex flex-col space-y-2 w-full md:w-auto">
-          <h3 className="text-lg md:text-xl font-semibold text-neutral-dark bg-primary/5 px-3 md:px-4 py-1.5 md:py-2 rounded-lg inline-flex overflow-hidden text-ellipsis whitespace-nowrap">
-            <span className="text-primary mr-2 flex-shrink-0">Tópico:</span> 
+      <div className="flex flex-col gap-3 sm:gap-4 mb-6 md:mb-8">
+        <div className="flex flex-col space-y-2 w-full">
+          <h3 className="text-base sm:text-lg md:text-xl font-semibold text-neutral-dark bg-primary/5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg inline-flex overflow-hidden">
+            <span className="text-primary mr-2 flex-shrink-0">Tópico:</span>
             <span className="truncate">{topic}</span>
           </h3>
-          <div className={`text-xs md:text-sm font-medium px-3 md:px-4 py-1 rounded-lg inline-flex items-center ${getDifficultyColor()}`}>
+          <div
+            className={`text-xs sm:text-sm font-medium px-3 md:px-4 py-1.5 rounded-lg inline-flex items-center ${getDifficultyColor()}`}
+          >
             <span className="mr-2">Dificuldade:</span> {getDifficultyLabel()}
           </div>
         </div>
-        <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm w-full md:w-auto justify-center md:justify-start">
+        <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 md:px-4 py-2 md:py-2.5 text-xs sm:text-sm w-full justify-center">
           <span className="text-gray-600 flex-shrink-0">Progresso:</span>
-          <div className="w-24 sm:w-32 md:w-40 h-1.5 md:h-2 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
-            <div 
-              className="h-full bg-primary rounded-full" 
-              style={{ width: `${((currentCardIndex + 1) / flashcards.length) * 100}%` }}
+          <div className="w-20 sm:w-24 md:w-32 lg:w-40 h-1.5 md:h-2 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
+            <div
+              className="h-full bg-primary rounded-full transition-all duration-300"
+              style={{
+                width: `${((currentCardIndex + 1) / flashcards.length) * 100}%`,
+              }}
             ></div>
           </div>
           <span className="text-gray-600 flex-shrink-0">
@@ -79,28 +87,28 @@ export default function FlashcardsContainer({ flashcards, topic, difficulty = "i
       </div>
 
       {/* Flashcard Display */}
-      <Flashcard 
-        card={flashcards[currentCardIndex]} 
+      <Flashcard
+        card={flashcards[currentCardIndex]}
         index={currentCardIndex}
         totalCards={flashcards.length}
       />
 
       {/* Navigation Controls */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center gap-3 sm:gap-4">
         <Button
           variant="outline"
-          className="bg-white border border-gray-200 text-gray-700 px-3 sm:px-4 md:px-5 py-2 md:py-2.5 rounded-lg hover:bg-gray-50 transition-all disabled:opacity-50 text-xs sm:text-sm"
+          className="bg-white border border-gray-200 text-gray-700 px-3 sm:px-4 md:px-5 py-2 md:py-2.5 rounded-lg hover:bg-gray-50 transition-all disabled:opacity-50 text-xs sm:text-sm flex-1 sm:flex-none"
           onClick={handlePrevCard}
           disabled={currentCardIndex === 0}
         >
           <ArrowLeft className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Anterior
         </Button>
 
-        <div className="hidden sm:flex space-x-1.5">
+        <div className="hidden sm:flex space-x-1 md:space-x-1.5">
           {flashcards.map((_, i) => (
             <div
               key={i}
-              className={`w-2 md:w-2.5 h-2 md:h-2.5 rounded-full transition-all ${
+              className={`w-1.5 md:w-2 lg:w-2.5 h-1.5 md:h-2 lg:h-2.5 rounded-full transition-all ${
                 i === currentCardIndex
                   ? "bg-primary scale-110"
                   : "bg-gray-300 opacity-40"
@@ -108,13 +116,15 @@ export default function FlashcardsContainer({ flashcards, topic, difficulty = "i
             />
           ))}
         </div>
-        <div className="flex sm:hidden text-xs text-gray-500">
+        <div className="flex sm:hidden text-xs text-gray-500 px-2">
           {currentCardIndex + 1} / {flashcards.length}
         </div>
 
         <Button
-          variant={currentCardIndex === flashcards.length - 1 ? "default" : "outline"}
-          className={`px-3 sm:px-4 md:px-5 py-2 md:py-2.5 rounded-lg transition-all text-xs sm:text-sm ${
+          variant={
+            currentCardIndex === flashcards.length - 1 ? "default" : "outline"
+          }
+          className={`px-3 sm:px-4 md:px-5 py-2 md:py-2.5 rounded-lg transition-all text-xs sm:text-sm flex-1 sm:flex-none ${
             currentCardIndex === flashcards.length - 1
               ? "bg-primary text-white hover:bg-primary/90"
               : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
@@ -128,16 +138,40 @@ export default function FlashcardsContainer({ flashcards, topic, difficulty = "i
 
       {/* Additional Options */}
       <div className="flex flex-wrap gap-2 sm:gap-3 md:gap-4 justify-center mt-8 md:mt-12 pt-6 md:pt-8 border-t border-gray-200">
-        <Button variant="ghost" className="bg-gray-50 text-neutral-dark px-3 sm:px-4 md:px-5 py-2 md:py-2.5 rounded-lg text-xs sm:text-sm flex items-center hover:bg-gray-100">
-          <svg className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <Button
+          variant="ghost"
+          className="bg-gray-50 text-neutral-dark px-3 sm:px-4 md:px-5 py-2 md:py-2.5 rounded-lg text-xs sm:text-sm flex items-center hover:bg-gray-100"
+        >
+          <svg
+            className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
           <span className="whitespace-nowrap">Salvar PDF</span>
         </Button>
-        <Button variant="ghost" className="bg-gray-50 text-neutral-dark px-3 sm:px-4 md:px-5 py-2 md:py-2.5 rounded-lg text-xs sm:text-sm flex items-center hover:bg-gray-100">
-          <svg className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <Button
+          variant="ghost"
+          className="bg-gray-50 text-neutral-dark px-3 sm:px-4 md:px-5 py-2 md:py-2.5 rounded-lg text-xs sm:text-sm flex items-center hover:bg-gray-100"
+        >
+          <svg
+            className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <circle cx="18" cy="5" r="3" />
             <circle cx="6" cy="12" r="3" />
             <circle cx="18" cy="19" r="3" />
@@ -146,8 +180,20 @@ export default function FlashcardsContainer({ flashcards, topic, difficulty = "i
           </svg>
           <span className="whitespace-nowrap">Compartilhar</span>
         </Button>
-        <Button variant="ghost" className="bg-primary/10 text-primary px-3 sm:px-4 md:px-5 py-2 md:py-2.5 rounded-lg text-xs sm:text-sm flex items-center hover:bg-primary/20">
-          <svg className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <Button
+          variant="ghost"
+          className="bg-primary/10 text-primary px-3 sm:px-4 md:px-5 py-2 md:py-2.5 rounded-lg text-xs sm:text-sm flex items-center hover:bg-primary/20"
+        >
+          <svg
+            className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38" />
           </svg>
           <span className="whitespace-nowrap">Novo Conjunto</span>
