@@ -49,8 +49,15 @@ func (r *flashcardSetRepo) GetByID(ctx context.Context, setID uuid.UUID) (model.
 }
 
 func (r *flashcardSetRepo) GetAllByUserID(ctx context.Context, userID uuid.UUID) ([]model.FlashcardSet, error) {
+	// Use a transaction to isolate this query from concurrent operations
+	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback() // Will be ignored if tx.Commit() is called
+
 	query := `SELECT id, user_id, topic, created_at, updated_at FROM flashcard_sets WHERE user_id = $1 ORDER BY created_at DESC`
-	rows, err := r.db.QueryContext(ctx, query, userID)
+	rows, err := tx.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -65,6 +72,16 @@ func (r *flashcardSetRepo) GetAllByUserID(ctx context.Context, userID uuid.UUID)
 		}
 		
 		sets = append(sets, set)
+	}
+
+	// Check for errors during iteration
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// Commit the read-only transaction
+	if err = tx.Commit(); err != nil {
+		return nil, err
 	}
 
 	return sets, nil

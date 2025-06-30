@@ -2,7 +2,7 @@ import { useState } from "react";
 import Footer from "@/components/Footer";
 import SummaryForm from "@/components/SummaryForm";
 import FlashcardsContainer from "@/components/FlashcardsContainer";
-import { BookOpen, Brain, FileText, Zap } from "lucide-react";
+import { BookOpen, Brain, FileText, Zap, Coins } from "lucide-react";
 import {
   type GenerateFromSummaryRequest,
   type Flashcard,
@@ -11,6 +11,7 @@ import {
 import { generateFlashcardsFromSummary } from "@/lib/goBackendApi";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { useToast } from "@/hooks/use-toast";
+import { useCredits } from "@/hooks/useCredits";
 import { getDifficultyLabel, scrollToElement } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import { API_CONFIG } from "@/lib/constants";
@@ -19,6 +20,12 @@ import { Button } from "@/components/ui/button";
 export default function SummaryGenerator() {
   const { user, session } = useProtectedRoute();
   const { toast } = useToast();
+  const {
+    credits,
+    hasInsufficientCredits,
+    showInsufficientCreditsError,
+    updateCredits,
+  } = useCredits();
   const [loading, setLoading] = useState(false);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [currentTopic, setCurrentTopic] = useState<string>("");
@@ -33,6 +40,12 @@ export default function SummaryGenerator() {
         description: "Você precisa estar logado para gerar flashcards.",
         variant: "destructive",
       });
+      return;
+    }
+
+    // Check if user has sufficient credits
+    if (hasInsufficientCredits()) {
+      showInsufficientCreditsError();
       return;
     }
 
@@ -70,6 +83,11 @@ export default function SummaryGenerator() {
         setCurrentTopic(topicName);
         setHasGeneratedCards(true);
 
+        // Update credits if returned from backend
+        if (response.credits_remaining !== undefined) {
+          updateCredits(response.credits_remaining);
+        }
+
         // Scroll to flashcards container after they're generated
         scrollToElement("flashcards-container");
 
@@ -79,7 +97,9 @@ export default function SummaryGenerator() {
             flashcardsWithTopic.length
           } flashcards baseados no seu ${
             data.contentType === "text" ? "texto" : "arquivo"
-          } com dificuldade ${getDifficultyLabel(data.difficulty)}`,
+          } com dificuldade ${getDifficultyLabel(
+            data.difficulty
+          )}. Créditos restantes: ${response.credits_remaining ?? credits - 1}`,
         });
       } else {
         // Modo de desenvolvimento com dados simulados
@@ -158,13 +178,22 @@ export default function SummaryGenerator() {
           </div>
 
           <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 md:p-8 mb-8 md:mb-12 border border-gray-100">
-            <div className="flex items-center mb-5">
-              <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/10 mr-3 md:mr-4">
-                <FileText className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center">
+                <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/10 mr-3 md:mr-4">
+                  <FileText className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                </div>
+                <h2 className="text-lg md:text-xl font-semibold text-neutral-dark">
+                  Envie seu material de estudo
+                </h2>
               </div>
-              <h2 className="text-lg md:text-xl font-semibold text-neutral-dark">
-                Envie seu material de estudo
-              </h2>
+
+              <div className="flex items-center gap-2 bg-yellow-50 px-3 py-2 rounded-lg border border-yellow-200">
+                <Coins className="h-4 w-4 text-yellow-600" />
+                <span className="text-sm font-medium text-yellow-800">
+                  {credits} créditos
+                </span>
+              </div>
             </div>
 
             <SummaryForm

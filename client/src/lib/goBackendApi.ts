@@ -289,7 +289,48 @@ export async function getUserFlashcardsByTopic(
   return response || [];
 }
 
+/**
+ * Obtém os créditos do usuário autenticado
+ * @param authToken - Token de autenticação do usuário
+ * @returns Número de créditos do usuário
+ */
+export async function getUserCredits(
+  authToken: string
+): Promise<{ credits: number }> {
+  try {
+    return makeGoBackendRequest<{ credits: number }>(
+      "/users/credits",
+      authToken,
+      {
+        method: "GET",
+      }
+    );
+  } catch (error) {
+    console.error("Error fetching user credits:", error);
+    throw new Error("Failed to fetch user credits from the server");
+  }
+}
+
 export async function getBackendUrl() {
   const config = await getConfig();
   return config.goBackendUrl;
+}
+
+export async function getUserDashboardData(authToken: string) {
+  const response = await fetch(`${GO_BACKEND_URL}/api/v1/users/dashboard`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Dashboard data request failed: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return {
+    credits: data.credits,
+    flashcardSets: data.flashcard_sets || [],
+  };
 }

@@ -80,6 +80,7 @@ export interface GoFlashcardSetWithFlashcards extends GoFlashcardSet {
 export interface GenerateFlashcardsResponse {
   flashcard_set_id: string; // ID do conjunto criado
   flashcards: GoFlashcard[]; // Lista de flashcards gerados
+  credits_remaining?: number; // Créditos restantes do usuário após a geração
 }
 
 // Tipo do request para geração de flashcards no backend Go

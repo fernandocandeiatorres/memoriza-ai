@@ -3,6 +3,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -69,10 +70,20 @@ func (h *FlashcardHandler) GenerateFlashcards(c *gin.Context) {
 		email = userEmail.(string)
 	}
 	
-	_, err = h.userService.EnsureUserExists(ctx, userID, email)
+	user, err := h.userService.EnsureUserExists(ctx, userID, email)
 	if err != nil {
 		log.Printf("Error ensuring user exists: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to verify user"})
+		return
+	}
+
+	// Check if user has sufficient credits (1 credit = 1 flashcard set)
+	if user.Credits < 1 {
+		c.JSON(http.StatusPaymentRequired, gin.H{
+			"error": "insufficient credits", 
+			"message": fmt.Sprintf("You need 1 credit to generate a flashcard set. You have %d credits.", user.Credits),
+			"credits": user.Credits,
+		})
 		return
 	}
 
@@ -102,9 +113,27 @@ func (h *FlashcardHandler) GenerateFlashcards(c *gin.Context) {
         return
     }
 
+	// 4. Consume 1 credit after successful generation
+	err = h.userService.ConsumeCredits(ctx, userID, 1)
+	if err != nil {
+		log.Printf("Error consuming credits for user %s: %v", userID, err)
+		// Note: We don't return error here since flashcards were already generated
+		// In a production system, you might want to implement compensation logic
+	}
+
+	// Get updated user credits to return to frontend
+	remainingCredits, err := h.userService.GetUserCredits(ctx, userID)
+	if err != nil {
+		log.Printf("Error getting user credits: %v", err)
+		remainingCredits = 0 // Safe fallback
+	}
 
 	// Respond with the generated flashcards.
-	c.JSON(http.StatusOK, gin.H{"flashcard_set_id": setID, "flashcards": stored})
+	c.JSON(http.StatusOK, gin.H{
+		"flashcard_set_id": setID, 
+		"flashcards": stored,
+		"credits_remaining": remainingCredits,
+	})
 }
 
 // GenerateFlashcardsFromSummary handles POST requests to generate flashcards from summary content.
@@ -141,10 +170,20 @@ func (h *FlashcardHandler) GenerateFlashcardsFromSummary(c *gin.Context) {
 		email = userEmail.(string)
 	}
 	
-	_, err = h.userService.EnsureUserExists(ctx, userID, email)
+	user, err := h.userService.EnsureUserExists(ctx, userID, email)
 	if err != nil {
 		log.Printf("Error ensuring user exists: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to verify user"})
+		return
+	}
+
+	// Check if user has sufficient credits (1 credit = 1 flashcard set)
+	if user.Credits < 1 {
+		c.JSON(http.StatusPaymentRequired, gin.H{
+			"error": "insufficient credits", 
+			"message": fmt.Sprintf("You need 1 credit to generate a flashcard set. You have %d credits.", user.Credits),
+			"credits": user.Credits,
+		})
 		return
 	}
 
@@ -184,9 +223,27 @@ func (h *FlashcardHandler) GenerateFlashcardsFromSummary(c *gin.Context) {
 		return
 	}
 
+	// 4. Consume 1 credit after successful generation
+	err = h.userService.ConsumeCredits(ctx, userID, 1)
+	if err != nil {
+		log.Printf("Error consuming credits for user %s: %v", userID, err)
+		// Note: We don't return error here since flashcards were already generated
+		// In a production system, you might want to implement compensation logic
+	}
+
+	// Get updated user credits to return to frontend
+	remainingCredits, err := h.userService.GetUserCredits(ctx, userID)
+	if err != nil {
+		log.Printf("Error getting user credits: %v", err)
+		remainingCredits = 0 // Safe fallback
+	}
 
 	// Respond with the generated flashcards.
-	c.JSON(http.StatusOK, gin.H{"flashcard_set_id": setID, "flashcards": stored})
+	c.JSON(http.StatusOK, gin.H{
+		"flashcard_set_id": setID, 
+		"flashcards": stored,
+		"credits_remaining": remainingCredits,
+	})
 }
 
 func (h *FlashcardHandler) GetFlashcardsBySetID(c *gin.Context) {
@@ -234,6 +291,41 @@ func (h *FlashcardHandler) GetFlashcardsByTopic(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"flashcards": flashcards} )
 }
 
+func (h *FlashcardHandler) GetUserCredits(c *gin.Context) {
+	// Get user info from context (set by auth middleware)
+	userIDStr, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
+		return
+	}
+
+	userEmail, _ := c.Get("userEmail") // Optional, might be empty
+
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+		return
+	}
+
+	ctx := context.Background()
+
+	// Ensure user exists in our database
+	email := ""
+	if userEmail != nil {
+		email = userEmail.(string)
+	}
+	
+	log.Printf("Getting user credits for user %s", userID.String())
+	user, err := h.userService.EnsureUserExists(ctx, userID, email)
+	if err != nil {
+		log.Printf("Error ensuring user exists: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to verify user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"credits": user.Credits})
+}
+
 func (h *FlashcardHandler) GetAllUserFlashcards(c *gin.Context) {
 	userIDStr := c.Param("user_id")
 	userID, err := uuid.Parse(userIDStr)
@@ -249,4 +341,73 @@ func (h *FlashcardHandler) GetAllUserFlashcards(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"user_flashcard_sets": flashcardSets} )
+}
+
+func (h *FlashcardHandler) GetUserDashboardData(c *gin.Context) {
+	// Get user info from context (set by auth middleware)
+	userIDStr, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in context"})
+		return
+	}
+
+	userEmail, _ := c.Get("userEmail") // Optional, might be empty
+
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+		return
+	}
+
+	ctx := context.Background()
+
+	// Ensure user exists in our database
+	email := ""
+	if userEmail != nil {
+		email = userEmail.(string)
+	}
+	
+	log.Printf("Getting dashboard data for user %s", userID.String())
+	user, err := h.userService.EnsureUserExists(ctx, userID, email)
+	if err != nil {
+		log.Printf("Error ensuring user exists: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to verify user"})
+		return
+	}
+
+	// Get flashcard sets with flashcard counts using the flashcard service
+	flashcardSetsWithFlashcards, err := h.flashcardService.GetAllUserFlashcards(ctx, userID)
+	if err != nil {
+		log.Printf("Error getting flashcard sets for user %s: %v", userID.String(), err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch flashcard sets"})
+		return
+	}
+
+	// Transform to include flashcard counts (same as GetFlashcardSets)
+	type FlashcardSetWithCount struct {
+		ID             string `json:"id"`
+		UserID         string `json:"user_id"`
+		Topic          string `json:"topic"`
+		CreatedAt      string `json:"created_at"`
+		UpdatedAt      string `json:"updated_at"`
+		FlashcardCount int    `json:"flashcard_count"`
+	}
+
+	var flashcardSets []FlashcardSetWithCount
+	for _, set := range flashcardSetsWithFlashcards {
+		flashcardSets = append(flashcardSets, FlashcardSetWithCount{
+			ID:             set.ID,
+			UserID:         set.UserID,
+			Topic:          set.Topic,
+			CreatedAt:      set.CreatedAt,
+			UpdatedAt:      set.UpdatedAt,
+			FlashcardCount: len(set.Flashcards),
+		})
+	}
+
+	// Return both credits and flashcard sets in a single response
+	c.JSON(http.StatusOK, gin.H{
+		"credits": user.Credits,
+		"flashcard_sets": flashcardSets,
+	})
 }

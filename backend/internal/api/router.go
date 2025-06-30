@@ -72,6 +72,8 @@ func SetupRouter(flashcardHandler *handler.FlashcardHandler, flashcardSetHandler
 		apiV1.GET("/users/:user_id/flashcardsets", flashcardSetHandler.GetFlashcardSets)
 		apiV1.GET("/users/:user_id/flashcards-topic", flashcardHandler.GetFlashcardsByTopic)
 		apiV1.GET("/users/:user_id/flashcards", flashcardHandler.GetAllUserFlashcards)
+		apiV1.GET("/users/credits", flashcardHandler.GetUserCredits)
+		apiV1.GET("/users/dashboard", flashcardHandler.GetUserDashboardData)
 
 		apiV1.POST("/flashcards/generate", flashcardHandler.GenerateFlashcards)
 		apiV1.POST("/flashcards/generate-from-summary", flashcardHandler.GenerateFlashcardsFromSummary)

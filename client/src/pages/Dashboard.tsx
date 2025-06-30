@@ -12,11 +12,12 @@ import {
   Plus,
   FileText,
   Target,
+  Coins,
 } from "lucide-react";
 import { Link } from "wouter";
 import Footer from "@/components/Footer";
 import Flashcard from "@/components/Flashcard";
-import { getUserFlashcardSets, getFlashcardsBySetId } from "@/lib/goBackendApi";
+import { getUserDashboardData, getFlashcardsBySetId } from "@/lib/goBackendApi";
 import { type Flashcard as FlashcardType } from "@shared/schema";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -44,12 +45,9 @@ export default function Dashboard() {
   const { user, session } = useProtectedRoute();
   const { toast } = useToast();
 
-  // Debug: Print backend URL
-  console.log("VITE_GO_BACKEND_URL:", import.meta.env.VITE_GO_BACKEND_URL);
-  console.log("All env vars:", import.meta.env);
-
   // State management
   const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);
+  const [credits, setCredits] = useState<number>(0);
   const [dataLoading, setDataLoading] = useState(false);
 
   // Details view state
@@ -64,21 +62,25 @@ export default function Dashboard() {
   const [lastClickedSetId, setLastClickedSetId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Data fetching
+  // Data fetching - now using a single combined call
   useEffect(() => {
     if (!session || !user) return;
 
-    const fetchData = async () => {
+    const fetchDashboardData = async () => {
       try {
         setDataLoading(true);
-        const data = await getUserFlashcardSets(user.id, session.access_token);
-        setFlashcardSets(Array.isArray(data) ? data : []);
+        const data = await getUserDashboardData(session.access_token);
+        setFlashcardSets(
+          Array.isArray(data.flashcardSets) ? data.flashcardSets : []
+        );
+        setCredits(data.credits || 0);
       } catch (error) {
-        logger.error("Failed to fetch flashcard sets", error);
+        logger.error("Failed to fetch dashboard data", error);
         setFlashcardSets([]);
+        setCredits(0);
         toast({
           title: "Erro",
-          description: "Não foi possível carregar seus flashcards.",
+          description: "Não foi possível carregar seus dados.",
           variant: "destructive",
         });
       } finally {
@@ -86,7 +88,7 @@ export default function Dashboard() {
       }
     };
 
-    fetchData();
+    fetchDashboardData();
   }, [session, user, toast]);
 
   const handleFlashcardSetClick = async (setId: string) => {
@@ -178,14 +180,19 @@ export default function Dashboard() {
       const refetchData = async () => {
         try {
           setDataLoading(true);
-          const data = await getUserFlashcardSets(
-            user.id,
+          const dashboardData = await getUserDashboardData(
             session.access_token
           );
-          setFlashcardSets(Array.isArray(data) ? data : []);
+          setFlashcardSets(
+            Array.isArray(dashboardData.flashcardSets)
+              ? dashboardData.flashcardSets
+              : []
+          );
+          setCredits(dashboardData.credits || 0);
         } catch (error) {
-          logger.error("Error refetching flashcard sets", error);
+          logger.error("Error refetching dashboard data", error);
           setFlashcardSets([]);
+          setCredits(0);
         } finally {
           setDataLoading(false);
         }
@@ -394,7 +401,22 @@ export default function Dashboard() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <Card>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs sm:text-sm font-medium text-gray-600">
+                      Créditos
+                    </p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900">
+                      {dataLoading ? "..." : credits}
+                    </p>
+                  </div>
+                  <Coins className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-600" />
+                </div>
+              </CardContent>
+            </Card>
             <Card>
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
@@ -418,17 +440,21 @@ export default function Dashboard() {
                       Total de Flashcards
                     </p>
                     <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                      {flashcardSets.reduce(
-                        (total, set) => total + set.flashcard_count,
-                        0
-                      )}
+                      {dataLoading
+                        ? "..."
+                        : flashcardSets
+                            .reduce(
+                              (total, set) => total + set.flashcard_count,
+                              0
+                            )
+                            .toString()}
                     </p>
                   </div>
                   <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
                 </div>
               </CardContent>
             </Card>
-            <Card className="sm:col-span-2 lg:col-span-1">
+            <Card>
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
