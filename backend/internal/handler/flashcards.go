@@ -80,9 +80,10 @@ func (h *FlashcardHandler) GenerateFlashcards(c *gin.Context) {
 	// Check if user has sufficient credits (1 credit = 1 flashcard set)
 	if user.Credits < 1 {
 		c.JSON(http.StatusPaymentRequired, gin.H{
-			"error": "insufficient credits", 
-			"message": fmt.Sprintf("You need 1 credit to generate a flashcard set. You have %d credits.", user.Credits),
+			"error": "insufficient_credits", 
+			"message": fmt.Sprintf("❌ Créditos insuficientes! Você precisa de 1 crédito para gerar flashcards. Você tem %d créditos.", user.Credits),
 			"credits": user.Credits,
+			"success": false,
 		})
 		return
 	}
@@ -133,6 +134,8 @@ func (h *FlashcardHandler) GenerateFlashcards(c *gin.Context) {
 		"flashcard_set_id": setID, 
 		"flashcards": stored,
 		"credits_remaining": remainingCredits,
+		"message": fmt.Sprintf("✅ %d flashcards gerados com sucesso! Restam %d créditos.", len(stored), remainingCredits),
+		"success": true,
 	})
 }
 
@@ -180,9 +183,10 @@ func (h *FlashcardHandler) GenerateFlashcardsFromSummary(c *gin.Context) {
 	// Check if user has sufficient credits (1 credit = 1 flashcard set)
 	if user.Credits < 1 {
 		c.JSON(http.StatusPaymentRequired, gin.H{
-			"error": "insufficient credits", 
-			"message": fmt.Sprintf("You need 1 credit to generate a flashcard set. You have %d credits.", user.Credits),
+			"error": "insufficient_credits", 
+			"message": fmt.Sprintf("❌ Créditos insuficientes! Você precisa de 1 crédito para gerar flashcards. Você tem %d créditos.", user.Credits),
 			"credits": user.Credits,
+			"success": false,
 		})
 		return
 	}
@@ -243,6 +247,8 @@ func (h *FlashcardHandler) GenerateFlashcardsFromSummary(c *gin.Context) {
 		"flashcard_set_id": setID, 
 		"flashcards": stored,
 		"credits_remaining": remainingCredits,
+		"message": fmt.Sprintf("✅ %d flashcards criados do seu resumo! Restam %d créditos.", len(stored), remainingCredits),
+		"success": true,
 	})
 }
 

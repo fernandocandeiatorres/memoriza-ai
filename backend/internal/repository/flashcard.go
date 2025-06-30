@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"time"
 
 	"github.com/fernandocandeiatorres/memoriza-ai/backend/internal/model"
 	"github.com/google/uuid"
@@ -13,6 +14,7 @@ type FlashcardRepository interface {
     Create(ctx context.Context, fc *model.Flashcard) error
     GetAllBySetID(ctx context.Context, setID uuid.UUID) ([]model.Flashcard, error)
     GetFlashcardsByTopic(ctx context.Context, userID uuid.UUID, topic string) ([]model.Flashcard, error)
+    GetAllUserFlashcardsWithSets(ctx context.Context, userID uuid.UUID) (map[string][]model.Flashcard, map[string]model.FlashcardSet, error)
 }
 
 type flashcardRepo struct {
@@ -98,4 +100,110 @@ func (r *flashcardRepo) GetFlashcardsByTopic(ctx context.Context, userID uuid.UU
 		flashcards = append(flashcards, f)
 	}
 	return flashcards, nil
+}
+
+// GetAllUserFlashcardsWithSets gets all flashcards for a user organized by sets using a single query
+func (r *flashcardRepo) GetAllUserFlashcardsWithSets(ctx context.Context, userID uuid.UUID) (map[string][]model.Flashcard, map[string]model.FlashcardSet, error) {
+	// Use transaction to isolate this complex query
+	tx, err := r.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
+	if err != nil {
+		return nil, nil, err
+	}
+	defer tx.Rollback()
+
+	query := `
+		SELECT 
+			fs.id as set_id, fs.user_id, fs.topic, fs.created_at as set_created_at, fs.updated_at as set_updated_at,
+			COALESCE(f.id, '00000000-0000-0000-0000-000000000000') as flashcard_id, 
+			COALESCE(f.card_order, 0) as card_order, 
+			COALESCE(f.question_text, '') as question_text, 
+			COALESCE(f.answer_text, '') as answer_text, 
+			COALESCE(f.created_at, fs.created_at) as flashcard_created_at, 
+			COALESCE(f.updated_at, fs.updated_at) as flashcard_updated_at
+		FROM flashcard_sets fs
+		LEFT JOIN flashcards f ON fs.id = f.flashcard_set_id
+		WHERE fs.user_id = $1
+		ORDER BY fs.created_at DESC, f.card_order ASC
+	`
+
+	rows, err := tx.QueryContext(ctx, query, userID)
+	if err != nil {
+		log.Printf("Error executing join query: %v", err)
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	flashcardsBySet := make(map[string][]model.Flashcard)
+	sets := make(map[string]model.FlashcardSet)
+
+	for rows.Next() {
+		var setID, userIDStr, topic, setCreatedAt, setUpdatedAt string
+		var flashcardID, questionText, answerText, flashcardCreatedAt, flashcardUpdatedAt string
+		var cardOrder int
+
+		err := rows.Scan(
+			&setID, &userIDStr, &topic, &setCreatedAt, &setUpdatedAt,
+			&flashcardID, &cardOrder, &questionText, &answerText, &flashcardCreatedAt, &flashcardUpdatedAt,
+		)
+		if err != nil {
+			log.Printf("Error scanning row: %v", err)
+			return nil, nil, err
+		}
+
+		// Add set if not already added
+		if _, exists := sets[setID]; !exists {
+			setUUID, _ := uuid.Parse(setID)
+			userUUID, _ := uuid.Parse(userIDStr)
+			
+			sets[setID] = model.FlashcardSet{
+				ID:        setUUID,
+				UserID:    userUUID,
+				Topic:     topic,
+				CreatedAt: parseTime(setCreatedAt),
+				UpdatedAt: parseTime(setUpdatedAt),
+			}
+			flashcardsBySet[setID] = []model.Flashcard{}
+		}
+
+		// Add flashcard if it exists (not null from LEFT JOIN)
+		if flashcardID != "00000000-0000-0000-0000-000000000000" && questionText != "" {
+			flashcardUUID, _ := uuid.Parse(flashcardID)
+			setUUID, _ := uuid.Parse(setID)
+
+			flashcard := model.Flashcard{
+				ID:             flashcardUUID,
+				FlashcardSetID: setUUID,
+				CardOrder:      cardOrder,
+				QuestionText:   questionText,
+				AnswerText:     answerText,
+				CreatedAt:      parseTime(flashcardCreatedAt),
+				UpdatedAt:      parseTime(flashcardUpdatedAt),
+			}
+			flashcardsBySet[setID] = append(flashcardsBySet[setID], flashcard)
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Printf("Error during row iteration: %v", err)
+		return nil, nil, err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, nil, err
+	}
+
+	return flashcardsBySet, sets, nil
+}
+
+// Helper function to parse time strings
+func parseTime(timeStr string) time.Time {
+	t, err := time.Parse("2006-01-02 15:04:05", timeStr)
+	if err != nil {
+		// Try with timezone
+		t, err = time.Parse("2006-01-02T15:04:05Z07:00", timeStr)
+		if err != nil {
+			return time.Now() // fallback
+		}
+	}
+	return t
 }

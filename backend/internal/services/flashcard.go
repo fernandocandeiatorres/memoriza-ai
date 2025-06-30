@@ -48,26 +48,25 @@ func (s *flashcardService) GetFlashcardsByTopic(ctx context.Context, userID uuid
 }
 
 func (s *flashcardService) GetAllUserFlashcards(ctx context.Context, userID uuid.UUID) ([]model.FlashcardSetWithFlashcards, error) {
-	sets, err := s.setRepo.GetAllByUserID(ctx, userID)
+	// Use the new single-query method to avoid prepared statement conflicts
+	flashcardsBySet, sets, err := s.repo.GetAllUserFlashcardsWithSets(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
 	var result []model.FlashcardSetWithFlashcards
 
-	for _, set := range sets {
-		cards, err := s.repo.GetAllBySetID(ctx, set.ID)
-		if err != nil {
-			return nil, err
-		}
-
+	// Convert map data to the expected slice format
+	for setID, flashcards := range flashcardsBySet {
+		set := sets[setID]
+		
 		result = append(result, model.FlashcardSetWithFlashcards{
 			ID:          set.ID.String(),
             UserID:      set.UserID.String(),
             Topic:       set.Topic,
             CreatedAt:   set.CreatedAt.Format("2006-01-02 15:04:05"),
             UpdatedAt:   set.UpdatedAt.Format("2006-01-02 15:04:05"),
-			Flashcards:   cards,
+			Flashcards:  flashcards,
 		})
 	}
 
