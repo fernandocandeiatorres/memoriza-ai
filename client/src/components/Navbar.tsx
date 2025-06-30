@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Brain, User, Menu, X } from "lucide-react";
+import { Brain, User, Menu, X, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -10,9 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
+import { useCredits } from "@/hooks/useCredits";
 
 export default function Navbar() {
   const { session, signOut } = useAuth();
+  const { credits, loading: creditsLoading } = useCredits();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleGeneratorClick = (e: React.MouseEvent) => {
@@ -77,6 +79,17 @@ export default function Navbar() {
                 Testimonials
               </a>
             </Link>
+
+            {/* Credits display for logged in users */}
+            {session && (
+              <div className="flex items-center gap-2 bg-yellow-50 px-3 py-2 rounded-lg border border-yellow-200">
+                <Coins className="h-4 w-4 text-yellow-600" />
+                <span className="text-sm font-medium text-yellow-800">
+                  {creditsLoading ? "..." : credits} créditos
+                </span>
+              </div>
+            )}
+
             {session ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -126,7 +139,14 @@ export default function Navbar() {
         </div>
 
         {/* Mobile menu button */}
-        <div className="lg:hidden">
+        <div className="lg:hidden flex items-center">
+          {/* Credits display for mobile */}
+          <div className="flex items-center gap-2 bg-yellow-50 px-3 py-2 rounded-lg border border-yellow-200 ">
+            <Coins className="h-4 w-4 text-yellow-600" />
+            <span className="text-sm font-medium text-yellow-800">
+              {creditsLoading ? "..." : credits} Créditos
+            </span>
+          </div>
           <Button
             variant="ghost"
             size="icon"

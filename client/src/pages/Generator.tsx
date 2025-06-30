@@ -2,7 +2,7 @@ import { useState } from "react";
 import Footer from "@/components/Footer";
 import TopicForm from "@/components/TopicForm";
 import FlashcardsContainer from "@/components/FlashcardsContainer";
-import { BookOpen, Brain, Target, Coins } from "lucide-react";
+import { BookOpen, Brain, Target } from "lucide-react";
 import {
   type GenerateFlashcardsRequest,
   type Flashcard,
@@ -21,9 +21,10 @@ export default function Generator() {
   const { user, session } = useProtectedRoute();
   const { toast } = useToast();
   const {
-    credits,
     hasInsufficientCredits,
     showInsufficientCreditsError,
+    showCreditsSuccess,
+    showCreditsWarning,
     updateCredits,
   } = useCredits();
   const [loading, setLoading] = useState(false);
@@ -36,7 +37,7 @@ export default function Generator() {
   const handleGenerateFlashcards = async (data: GenerateFlashcardsRequest) => {
     if (!session || !user) {
       toast({
-        title: "Erro",
+        title: "Erro de Autenticação",
         description: "Você precisa estar logado para gerar flashcards.",
         variant: "destructive",
       });
@@ -75,21 +76,19 @@ export default function Generator() {
         // Update credits if returned from backend
         if (response.credits_remaining !== undefined) {
           updateCredits(response.credits_remaining);
+          showCreditsSuccess(
+            response.credits_remaining,
+            flashcardsWithTopic.length
+          );
+
+          // Show warning if credits are low
+          if (response.credits_remaining <= 1) {
+            showCreditsWarning();
+          }
         }
 
         // Scroll to flashcards container after they're generated
         scrollToElement("flashcards-container");
-
-        toast({
-          title: "Flashcards gerados!",
-          description: `Criados ${
-            flashcardsWithTopic.length
-          } flashcards para "${
-            data.topic
-          }" com dificuldade ${getDifficultyLabel(
-            data.difficulty
-          )}. Créditos restantes: ${response.credits_remaining ?? credits - 1}`,
-        });
       } else {
         // Modo de desenvolvimento com dados simulados
         setTimeout(() => {
@@ -102,21 +101,39 @@ export default function Generator() {
           scrollToElement("flashcards-container");
 
           toast({
-            title: "Flashcards gerados!",
+            title: "✅ Flashcards Gerados!",
             description: `Criados ${generatedCards.length} flashcards para "${
               data.topic
-            }" com dificuldade ${getDifficultyLabel(data.difficulty)}`,
+            }" com dificuldade ${getDifficultyLabel(
+              data.difficulty
+            )} (modo simulação)`,
           });
         }, API_CONFIG.SIMULATION_DELAY);
       }
     } catch (error) {
       logger.error("Erro ao gerar flashcards", error);
+
+      // Enhanced error handling with better messages
+      let errorMessage = "Tente novamente com um tópico diferente.";
+      let errorTitle = "Erro ao Gerar Flashcards";
+
+      if (error instanceof Error) {
+        if (error.message.includes("insufficient credits")) {
+          errorTitle = "Créditos Insuficientes";
+          errorMessage =
+            "Você não tem créditos suficientes para gerar flashcards.";
+        } else if (error.message.includes("network")) {
+          errorTitle = "Erro de Conexão";
+          errorMessage =
+            "Verifique sua conexão com a internet e tente novamente.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
       toast({
-        title: "Erro ao gerar flashcards",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Tente novamente com um tópico diferente.",
+        title: errorTitle,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -151,22 +168,13 @@ export default function Generator() {
           </div>
 
           <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 md:p-8 mb-8 md:mb-12 border border-gray-100">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center">
-                <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/10 mr-3 md:mr-4">
-                  <Target className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-                </div>
-                <h2 className="text-lg md:text-xl font-semibold text-neutral-dark">
-                  Digite seu tópico de estudo
-                </h2>
+            <div className="flex items-center mb-5">
+              <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/10 mr-3 md:mr-4">
+                <Target className="h-4 w-4 md:h-5 md:w-5 text-primary" />
               </div>
-
-              <div className="flex items-center gap-2 bg-yellow-50 px-3 py-2 rounded-lg border border-yellow-200">
-                <Coins className="h-4 w-4 text-yellow-600" />
-                <span className="text-sm font-medium text-yellow-800">
-                  {credits} créditos
-                </span>
-              </div>
+              <h2 className="text-lg md:text-xl font-semibold text-neutral-dark">
+                Digite seu tópico de estudo
+              </h2>
             </div>
 
             <TopicForm

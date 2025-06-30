@@ -35,9 +35,19 @@ export const useCredits = () => {
     setCredits(newCredits);
   }, []);
 
-  const decrementCredits = useCallback((amount: number = 1) => {
-    setCredits((prev) => Math.max(0, prev - amount));
-  }, []);
+  const decrementCredits = useCallback(
+    (amount: number = 1) => {
+      setCredits((prev) => Math.max(0, prev - amount));
+      toast({
+        title: "Crédito Usado",
+        description: `${amount} crédito${amount > 1 ? "s" : ""} consumido${
+          amount > 1 ? "s" : ""
+        }. Restam ${Math.max(0, credits - amount)} créditos.`,
+        variant: "default",
+      });
+    },
+    [credits, toast]
+  );
 
   const hasInsufficientCredits = useCallback(
     (required: number = 1) => {
@@ -54,6 +64,29 @@ export const useCredits = () => {
     });
   }, [credits, toast]);
 
+  const showCreditsSuccess = useCallback(
+    (remainingCredits: number, flashcardCount: number) => {
+      toast({
+        title: "✅ Flashcards Gerados!",
+        description: `${flashcardCount} flashcards criados com sucesso! Restam ${remainingCredits} créditos.`,
+        variant: "default",
+      });
+    },
+    [toast]
+  );
+
+  const showCreditsWarning = useCallback(() => {
+    if (credits <= 1) {
+      toast({
+        title: "⚠️ Poucos Créditos",
+        description: `Você tem apenas ${credits} crédito${
+          credits !== 1 ? "s" : ""
+        } restante${credits !== 1 ? "s" : ""}.`,
+        variant: "default",
+      });
+    }
+  }, [credits, toast]);
+
   useEffect(() => {
     fetchCredits();
   }, [fetchCredits]);
@@ -67,5 +100,7 @@ export const useCredits = () => {
     decrementCredits,
     hasInsufficientCredits,
     showInsufficientCreditsError,
+    showCreditsSuccess,
+    showCreditsWarning,
   };
 };

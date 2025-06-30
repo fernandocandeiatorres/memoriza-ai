@@ -2,13 +2,14 @@ import { useState } from "react";
 import Footer from "@/components/Footer";
 import SummaryForm from "@/components/SummaryForm";
 import FlashcardsContainer from "@/components/FlashcardsContainer";
-import { BookOpen, Brain, FileText, Zap, Coins } from "lucide-react";
+import { BookOpen, Brain, FileText, Zap } from "lucide-react";
 import {
   type GenerateFromSummaryRequest,
   type Flashcard,
   adaptGoToFrontendResponse,
 } from "@shared/schema";
 import { generateFlashcardsFromSummary } from "@/lib/goBackendApi";
+import { mockGenerateFlashcards } from "@/lib/mockFlashcards";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
 import { useToast } from "@/hooks/use-toast";
 import { useCredits } from "@/hooks/useCredits";
@@ -21,9 +22,10 @@ export default function SummaryGenerator() {
   const { user, session } = useProtectedRoute();
   const { toast } = useToast();
   const {
-    credits,
     hasInsufficientCredits,
     showInsufficientCreditsError,
+    showCreditsSuccess,
+    showCreditsWarning,
     updateCredits,
   } = useCredits();
   const [loading, setLoading] = useState(false);
@@ -36,7 +38,7 @@ export default function SummaryGenerator() {
   const handleGenerateFlashcards = async (data: GenerateFromSummaryRequest) => {
     if (!session || !user) {
       toast({
-        title: "Erro",
+        title: "Erro de Autenticação",
         description: "Você precisa estar logado para gerar flashcards.",
         variant: "destructive",
       });
@@ -52,98 +54,82 @@ export default function SummaryGenerator() {
     setLoading(true);
 
     try {
-      // Armazena a dificuldade selecionada
       setCurrentDifficulty(data.difficulty);
 
       if (API_CONFIG.USE_GO_BACKEND) {
-        // Usando a API Go real com token de autenticação
         const response = await generateFlashcardsFromSummary(
           data,
           session.access_token
         );
-
-        // Adapta a resposta do formato Go para o formato do frontend
         const adaptedFlashcards = adaptGoToFrontendResponse(response);
 
-        // Define um tópico baseado no tipo de conteúdo
-        const topicName =
-          data.contentType === "text"
-            ? "Resumo de Estudo"
-            : data.fileName
-            ? data.fileName.split(".")[0]
-            : `Arquivo ${data.contentType.toUpperCase()}`;
-
-        // Adiciona o tópico a cada flashcard
         const flashcardsWithTopic = adaptedFlashcards.map((card) => ({
           ...card,
-          topic: topicName,
+          topic: data.fileName || "Resumo de Estudo",
         }));
 
         setFlashcards(flashcardsWithTopic);
-        setCurrentTopic(topicName);
+        setCurrentTopic(data.fileName || "Resumo de Estudo");
         setHasGeneratedCards(true);
 
-        // Update credits if returned from backend
+        // Update credits and show success notification
         if (response.credits_remaining !== undefined) {
           updateCredits(response.credits_remaining);
-        }
-
-        // Scroll to flashcards container after they're generated
-        scrollToElement("flashcards-container");
-
-        toast({
-          title: "Flashcards gerados!",
-          description: `Criados ${
+          showCreditsSuccess(
+            response.credits_remaining,
             flashcardsWithTopic.length
-          } flashcards baseados no seu ${
-            data.contentType === "text" ? "texto" : "arquivo"
-          } com dificuldade ${getDifficultyLabel(
-            data.difficulty
-          )}. Créditos restantes: ${response.credits_remaining ?? credits - 1}`,
-        });
-      } else {
-        // Modo de desenvolvimento com dados simulados
-        setTimeout(() => {
-          // Mock data para desenvolvimento
-          const generatedCards: Flashcard[] = Array.from(
-            { length: 10 },
-            (_, i) => ({
-              id: i + 1,
-              topic: "Resumo de Estudo (Mock)",
-              question: `Pergunta ${i + 1} baseada no resumo fornecido`,
-              answer: `Resposta detalhada ${
-                i + 1
-              } extraída do conteúdo do resumo`,
-            })
           );
 
+          // Show warning if credits are low
+          if (response.credits_remaining <= 1) {
+            showCreditsWarning();
+          }
+        }
+
+        scrollToElement("flashcards-container");
+      } else {
+        // Development mode
+        setTimeout(() => {
+          const generatedCards = mockGenerateFlashcards({
+            topic: data.fileName || "Resumo de Estudo",
+            difficulty: data.difficulty,
+          });
           setFlashcards(generatedCards);
-          setCurrentTopic("Resumo de Estudo (Mock)");
+          setCurrentTopic(data.fileName || "Resumo de Estudo");
           setHasGeneratedCards(true);
 
-          // Scroll to flashcards container after they're generated
           scrollToElement("flashcards-container");
 
           toast({
-            title: "Flashcards gerados!",
-            description: `Criados ${
-              generatedCards.length
-            } flashcards baseados no seu ${
-              data.contentType === "text" ? "texto" : "arquivo"
-            } com dificuldade ${getDifficultyLabel(
-              data.difficulty
-            )} (modo simulado)`,
+            title: "✅ Flashcards Gerados!",
+            description: `Criados ${generatedCards.length} flashcards do seu resumo (modo simulação)`,
           });
         }, API_CONFIG.SIMULATION_DELAY);
       }
     } catch (error) {
-      logger.error("Erro ao gerar flashcards do resumo", error);
+      logger.error("Erro ao gerar flashcards", error);
+
+      // Enhanced error handling
+      let errorMessage = "Tente novamente com um arquivo diferente.";
+      let errorTitle = "Erro ao Gerar Flashcards";
+
+      if (error instanceof Error) {
+        if (error.message.includes("insufficient credits")) {
+          errorTitle = "Créditos Insuficientes";
+          errorMessage =
+            "Você não tem créditos suficientes para gerar flashcards.";
+        } else if (error.message.includes("network")) {
+          errorTitle = "Erro de Conexão";
+          errorMessage =
+            "Verifique sua conexão com a internet e tente novamente.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
       toast({
-        title: "Erro ao gerar flashcards",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Tente novamente com um conteúdo diferente.",
+        title: errorTitle,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -178,22 +164,13 @@ export default function SummaryGenerator() {
           </div>
 
           <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 md:p-8 mb-8 md:mb-12 border border-gray-100">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center">
-                <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/10 mr-3 md:mr-4">
-                  <FileText className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-                </div>
-                <h2 className="text-lg md:text-xl font-semibold text-neutral-dark">
-                  Envie seu material de estudo
-                </h2>
+            <div className="flex items-center mb-5">
+              <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/10 mr-3 md:mr-4">
+                <FileText className="h-4 w-4 md:h-5 md:w-5 text-primary" />
               </div>
-
-              <div className="flex items-center gap-2 bg-yellow-50 px-3 py-2 rounded-lg border border-yellow-200">
-                <Coins className="h-4 w-4 text-yellow-600" />
-                <span className="text-sm font-medium text-yellow-800">
-                  {credits} créditos
-                </span>
-              </div>
+              <h2 className="text-lg md:text-xl font-semibold text-neutral-dark">
+                Envie seu material de estudo
+              </h2>
             </div>
 
             <SummaryForm
