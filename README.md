@@ -2,7 +2,19 @@
 
 Aplicação web moderna que gera automaticamente flashcards para estudantes de medicina, com capacidade de selecionar o nível de dificuldade dos flashcards.
 
-![Memoriza.ai](./generated-icon.png)
+Stack
+(Frontend client/)
+- React SPA com roteamento via Wouter
+- Estado global via React Query
+- Componentes UI modulares (Radix + TailwindCSS)
+- Hooks customizados (useAuth, useCredits)
+- Integração com Supabase para auth
+
+(Backend backend/)
+- API REST em Go com Gin
+
+(Banco de dados)
+- PostgreSQL via Supabase
 
 ## Guia Rápido de Inicialização
 
