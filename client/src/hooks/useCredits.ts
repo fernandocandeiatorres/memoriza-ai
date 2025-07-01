@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "./useAuth";
 import { getUserCredits } from "@/lib/goBackendApi";
-import { useToast } from "./use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 export const useCredits = () => {
   const { session } = useAuth();

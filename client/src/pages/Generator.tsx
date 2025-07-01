@@ -11,7 +11,7 @@ import {
 import { generateFlashcards } from "@/lib/goBackendApi";
 import { mockGenerateFlashcards } from "@/lib/mockFlashcards";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { useCredits } from "@/hooks/useCredits";
 import { getDifficultyLabel, scrollToElement } from "@/lib/utils";
 import { logger } from "@/lib/logger";

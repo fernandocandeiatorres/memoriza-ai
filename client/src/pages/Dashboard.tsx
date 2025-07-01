@@ -20,7 +20,7 @@ import Flashcard from "@/components/Flashcard";
 import { getUserDashboardData, getFlashcardsBySetId } from "@/lib/goBackendApi";
 import { type Flashcard as FlashcardType } from "@shared/schema";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { formatDate, formatDateTime, getInitials } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import { useProtectedRoute } from "@/hooks/useProtectedRoute";
